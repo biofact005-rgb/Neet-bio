@@ -1,11 +1,13 @@
-import telebot
+Import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
-import threading, os, time, json, io
+import threading, os, time
 import certifi 
+import json
 from datetime import datetime
+
 
 # ==========================================
 # ⚙️ CONFIGURATION
@@ -14,20 +16,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEB_APP_URL = os.getenv("WEB_APP_URL", "https://your-app.onrender.com") 
 ADMIN_ID = 8557964907 
 
-# Channel Details
+# Channel Details for Verification
 CHANNEL_USERNAME = "@errorkid_05" 
 CHANNEL_LINK = "https://t.me/errorkid_05"
 
 MONGO_URI = os.getenv("MONGO_URI")
-
-# 🎁 REFER AND EARN REWARDS (Yahan File IDs dalein)
-# Format: {Referral_Count: "TELEGRAM_FILE_ID"}
-# File ID paane ke liye bot ko file bhejein aur file_id copy karein.
-REWARD_FILES = {
-    2: "FILE_ID_FOR_2_REF",  # Replace with actual File ID
-    5: "FILE_ID_FOR_5_REF",
-    10: "FILE_ID_FOR_10_REF"
-}
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -52,15 +45,17 @@ except Exception as e:
     print(f"❌ MongoDB Connection Failed: {e}")
 
 # ==========================================
-# 🔐 HELPER FUNCTIONS
+# 🔐 SUBSCRIPTION CHECK (STRICT MODE)
 # ==========================================
 def check_membership(user_id):
     try:
+        # Bot Channel me ADMIN hona chahiye tabhi ye kaam karega
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
         if member.status in ['creator', 'administrator', 'member']:
             return True
         return False
     except Exception as e:
+        # Agar error aaya (e.g., bot admin nahi hai), toh by default Allow mat karo
         print(f"Membership Check Error: {e}")
         return False
 
@@ -70,6 +65,9 @@ def get_join_markup():
     markup.add(InlineKeyboardButton("🔄 Check Status", callback_data="check_sub"))
     return markup
 
+# ==========================================
+# 🧮 LOGIC
+# ==========================================
 def calculate_grade_stats(xp):
     level = 1; cost = 100; temp_xp = xp
     while temp_xp >= cost:
@@ -99,28 +97,13 @@ def parse_txt_file(content):
     return meta, questions
 
 # ==========================================
-# 🤖 BOT HANDLERS (Updated with Refer & Admin)
+# 🤖 BOT HANDLERS
 # ==========================================
 @bot.message_handler(commands=['start'])
 def start(m):
     uid = m.from_user.id
-    text = m.text.split()
     
-    # REFERRAL LOGIC
-    if len(text) > 1:
-        referrer_id = text[1]
-        # Check: Not self-referral, Referrer exists, New User check
-        if referrer_id != str(uid) and db_connected:
-            existing_user = users_col.find_one({"_id": uid})
-            if not existing_user:
-                # Increment referrer count
-                users_col.update_one(
-                    {"_id": int(referrer_id)},
-                    {"$inc": {"referrals": 1}}
-                )
-                print(f"➕ Referral counted for {referrer_id}")
-
-    # MEMBERSHIP CHECK
+    # 1. Check Membership
     if not check_membership(uid):
         bot.send_message(
             m.chat.id, 
@@ -130,91 +113,98 @@ def start(m):
         )
         return
 
+    # 2. If Joined, Show App
     app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🧬 OPEN NEET PRO", web_app=WebAppInfo(url=app_url)))
     markup.add(InlineKeyboardButton("📢 Channel", url=CHANNEL_LINK))
     bot.send_message(m.chat.id, f"Welcome Future Doctor, {m.from_user.first_name}! 🩺\n\n✅ **Verification Successful**", reply_markup=markup)
 
-# --- 1. BROADCAST FEATURE ---
+@bot.callback_query_handler(func=lambda call: call.data == "check_sub")
+
+# ==========================================
+# 📢 BROADCAST SYSTEM
+# ==========================================
 @bot.message_handler(commands=['broadcast'])
-def broadcast_msg(m):
-    if m.from_user.id != ADMIN_ID: return
-    msg = m.text.replace("/broadcast", "").strip()
-    if not msg:
-        bot.reply_to(m, "❌ Message text missing!")
+def broadcast_message(message):
+    uid = str(message.from_user.id)
+    if uid != str(ADMIN_ID): return # Sirf Admin ke liye
+
+    # Command ke baad wala text nikalo
+    msg_text = message.text.split(maxsplit=1)
+    if len(msg_text) < 2:
+        bot.reply_to(message, "⚠️ Usage: `/broadcast Your Message Here`")
         return
     
-    if not db_connected: return
+    text_to_send = msg_text[1]
+    
+    # Database se users nikalo
     users = users_col.find({}, {"_id": 1})
-    count = 0
-    bot.reply_to(m, "🚀 Broadcast Started...")
+    total = users_col.count_documents({})
+    success = 0
+    blocked = 0
     
-    for u in users:
+    status_msg = bot.reply_to(message, f"🚀 Broadcast started to {total} users...")
+    
+    for user in users:
         try:
-            bot.send_message(u['_id'], msg)
-            count += 1
-            time.sleep(0.05) # Prevent flood wait
-        except: pass
-    bot.reply_to(m, f"✅ Broadcast sent to {count} users.")
+            bot.send_message(user['_id'], f"📢 **ANNOUNCEMENT**\n\n{text_to_send}", parse_mode="Markdown")
+            success += 1
+            time.sleep(0.1) # Flood limit se bachne ke liye
+        except Exception:
+            blocked += 1
+            
+    bot.edit_message_text(f"✅ **Broadcast Complete!**\n\nSent: {success}\nFailed/Blocked: {blocked}", message.chat.id, status_msg.message_id)
+    
 
-# --- 2. BACKUP & RESTORE FEATURE ---
+# ==========================================
+# 💾 BACKUP SYSTEM
+# ==========================================
 @bot.message_handler(commands=['backup'])
-def backup_db(m):
-    if m.from_user.id != ADMIN_ID or not db_connected: return
-    
-    # Export Users & Questions
-    users = list(users_col.find())
-    questions = list(questions_col.find({}, {"_id": 0})) # Exclude ObjectId for clean JSON
-    
-    backup_data = {
-        "users": users,
-        "questions": questions,
-        "timestamp": str(datetime.now())
-    }
-    
-    # Create In-Memory File
-    json_str = json.dumps(backup_data, default=str, indent=2)
-    bio = io.BytesIO(json_str.encode('utf-8'))
-    bio.name = f"backup_{int(time.time())}.json"
-    
-    bot.send_document(m.chat.id, bio, caption="📂 Database Backup")
+def export_backup(message):
+    uid = str(message.from_user.id)
+    if uid != str(ADMIN_ID): return  # Sirf Admin ke liye
 
-@bot.message_handler(commands=['restore'])
-def restore_db(m):
-    if m.from_user.id != ADMIN_ID: return
-    bot.reply_to(m, "📂 Please reply to this message with the Backup JSON file.")
-    bot.register_next_step_handler(m, process_restore)
+    if not db_connected:
+        bot.reply_to(message, "❌ Database Connected nahi hai!")
+        return
 
-def process_restore(m):
-    if not m.document or not db_connected: return
+    bot.send_message(message.chat.id, "⏳ Creating Backup... Please wait.")
+
     try:
-        file_info = bot.get_file(m.document.file_id)
-        downloaded = bot.download_file(file_info.file_path)
-        data = json.loads(downloaded)
-        
-        # Restore logic (Upsert to prevent duplicate errors)
-        if 'questions' in data:
-            for q in data['questions']:
-                questions_col.update_one(
-                    {"source": q.get('source'), "type": q.get('type'), "chapter": q.get('chapter')},
-                    {"$set": q}, upsert=True
-                )
-        
-        if 'users' in data:
-            for u in data['users']:
-                uid = u.pop('_id', None)
-                if uid:
-                    users_col.update_one({"_id": uid}, {"$set": u}, upsert=True)
-                    
-        bot.reply_to(m, "✅ Database Restored Successfully!")
-    except Exception as e:
-        bot.reply_to(m, f"❌ Restore Failed: {e}")
+        # 1. Saara Data Fetch karo
+        users = list(users_col.find({}, {"_id": 1, "name": 1, "xp": 1, "mistakes": 1}))
+        questions = list(questions_col.find({}, {"_id": 0})) # ID hata diya taaki restore me issue na aaye
+        logs = list(logs_col.find({}, {"_id": 0}))
 
-@bot.callback_query_handler(func=lambda call: call.data == "check_sub")
+        backup_data = {
+            "timestamp": str(datetime.now()),
+            "users": users,
+            "questions": questions,
+            "logs": logs
+        }
+
+        # 2. JSON File banao
+        file_name = f"NeetBot_Backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(file_name, "w", encoding="utf-8") as f:
+            json.dump(backup_data, f, indent=4, default=str)
+
+        # 3. File bhejo
+        with open(file_name, "rb") as f:
+            bot.send_document(message.chat.id, f, caption="✅ **Full Database Backup**\n\nIs file ko sambhal kar rakhein. Restore karne ke liye is file ko bhejkar caption me `/restore` likhein.")
+
+        # 4. Local file delete karo (cleanup)
+        os.remove(file_name)
+
+    except Exception as e:
+        bot.reply_to(message, f"❌ Backup Failed: {str(e)}")
+
+
+    
 def callback_check(call):
     uid = call.from_user.id
     if check_membership(uid):
+        # Allow Access
         bot.answer_callback_query(call.id, "✅ Verified!")
         app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
         markup = InlineKeyboardMarkup()
@@ -226,16 +216,14 @@ def callback_check(call):
             reply_markup=markup
         )
     else:
+        # Still not joined
         bot.answer_callback_query(call.id, "❌ Not Joined Yet!", show_alert=True)
+
+@bot.message_handler(content_types=['document'])
 
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
     if str(message.from_user.id) != str(ADMIN_ID): return 
-    # File ID helper for Admin to setup rewards
-    if message.caption == "id":
-        bot.reply_to(message, f"File ID: `{message.document.file_id}`", parse_mode="Markdown")
-        return
-
     if not db_connected: 
         bot.reply_to(message, "❌ DB Error")
         return
@@ -243,21 +231,52 @@ def handle_docs(message):
     try:
         file_info = bot.get_file(message.document.file_id)
         downloaded = bot.download_file(file_info.file_path)
+        
+        # --- RESTORE LOGIC (Agar caption /restore hai) ---
+        if message.caption == '/restore' and message.document.file_name.endswith('.json'):
+            data = json.loads(downloaded.decode('utf-8'))
+            
+            # 1. Users Restore
+            if 'users' in data:
+                for u in data['users']:
+                    users_col.replace_one({"_id": u['_id']}, u, upsert=True)
+            
+            # 2. Questions Restore
+            if 'questions' in data:
+                # Optional: Purane questions delete karne hain toh ye line uncomment karein:
+                # questions_col.delete_many({}) 
+                for q in data['questions']:
+                    questions_col.update_one(
+                        {"source": q['source'], "type": q['type'], "chapter": q['chapter']}, 
+                        {"$set": q}, 
+                        upsert=True
+                    )
+
+            # 3. Logs Restore
+            if 'logs' in data and len(data['logs']) > 0:
+                logs_col.insert_many(data['logs'])
+
+            bot.reply_to(message, "✅ **Restore Successful!**\nData database me wapas aa gaya hai.")
+            return
+        
+        # --- OLD LOGIC (Agar .txt file hai - Questions Upload) ---
         content = downloaded.decode('utf-8')
         meta, data = parse_txt_file(content)
         if not meta: 
-            bot.reply_to(message, data)
+            bot.reply_to(message, data) # Error message from parser
             return
 
         filter_q = {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter']}
         update_q = {"$set": {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter'], "data": data}}
         questions_col.update_one(filter_q, update_q, upsert=True)
         bot.reply_to(message, f"☁️ Saved: {meta['chapter']} ({len(data)} Qs)")
+
     except Exception as e:
         bot.reply_to(message, f"Error: {e}")
 
+
 # ==========================================
-# 🌐 API ROUTES
+# 🌐 API ROUTES (UNCHANGED)
 # ==========================================
 @app.route('/')
 def index(): return render_template('quiz.html')
@@ -270,7 +289,7 @@ def get_data():
     for doc in all_docs:
         src, typ, chap = doc['source'], doc['type'], doc['chapter']
         if src not in tree: tree[src] = {}
-        if typ not in tree[src]: tree[src] = {}
+        if typ not in tree[src]: tree[src][typ] = {}
         tree[src][typ][chap] = doc['data']
     return jsonify(tree)
 
@@ -282,13 +301,11 @@ def sync_user():
     score_add = int(data.get('add_score', 0))
     mistakes = data.get('mistakes', []); solved = data.get('solved', [])
     
-    user = users_col.find_one({"_id": int(uid)})
-    if not user: 
-        user = {"_id": int(uid), "name": name, "xp": 0, "mistakes": [], "referrals": 0, "claimed": []}
-        users_col.insert_one(user)
+    user = users_col.find_one({"_id": uid})
+    if not user: user = {"_id": uid, "name": name, "xp": 0, "mistakes": []}; users_col.insert_one(user)
     
     new_xp = max(0, user.get('xp', 0) + score_add)
-    if score_add > 0: logs_col.insert_one({"uid": int(uid), "name": name, "score": score_add, "ts": time.time()})
+    if score_add > 0: logs_col.insert_one({"uid": uid, "name": name, "score": score_add, "ts": time.time()})
     
     curr_mistakes = user.get('mistakes', [])
     exist = {m['q'] for m in curr_mistakes}
@@ -296,58 +313,14 @@ def sync_user():
         if m['q'] not in exist: curr_mistakes.append(m)
     if solved: curr_mistakes = [m for m in curr_mistakes if m['q'] not in solved]
         
-    users_col.update_one({"_id": int(uid)}, {"$set": {"xp": new_xp, "name": name, "mistakes": curr_mistakes}})
+    users_col.update_one({"_id": uid}, {"$set": {"xp": new_xp, "name": name, "mistakes": curr_mistakes}})
     stats = calculate_grade_stats(new_xp)
     return jsonify({"grade": f"Grade {stats['grade']}", "current_xp": stats['current_xp'], "req_xp": stats['req_xp'], "percent": stats['percent'], "mistake_count": len(curr_mistakes), "mistakes_list": curr_mistakes})
-
-# --- 4. REFERRAL SYSTEM APIs ---
-@app.route('/api/referral/stats', methods=['GET'])
-def get_ref_stats():
-    if not db_connected: return jsonify({"count": 0, "claimed": []})
-    uid = request.args.get('uid')
-    user = users_col.find_one({"_id": int(uid)})
-    if user:
-        return jsonify({
-            "count": user.get('referrals', 0),
-            "claimed": user.get('claimed', [])
-        })
-    return jsonify({"count": 0, "claimed": []})
-
-@app.route('/api/referral/claim', methods=['POST'])
-def claim_reward():
-    if not db_connected: return jsonify({"error": "No DB"})
-    data = request.json
-    uid = int(data.get('uid'))
-    milestone = int(data.get('milestone'))
-    
-    user = users_col.find_one({"_id": uid})
-    current_refs = user.get('referrals', 0)
-    claimed = user.get('claimed', [])
-    
-    # Validate
-    if milestone not in REWARD_FILES: return jsonify({"error": "Invalid Reward"})
-    if milestone in claimed: return jsonify({"error": "Already Claimed"})
-    if current_refs < milestone: return jsonify({"error": "Not enough referrals"})
-    
-    # Send File
-    try:
-        file_id = REWARD_FILES[milestone]
-        bot.send_document(uid, file_id, caption=f"🎁 Congratulations! Here is your reward for {milestone} referrals.")
-        
-        # Update DB
-        users_col.update_one({"_id": uid}, {"$push": {"claimed": milestone}})
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)})
 
 @app.route('/api/leaderboard/<filter>')
 def leaderboard(filter):
     if not db_connected: return jsonify({"top": [], "user": None})
-    uid_req = request.args.get('uid')
-    try: uid_req = int(uid_req)
-    except: uid_req = 0
-    
-    now = time.time(); pipeline = []
+    uid_req = request.args.get('uid'); now = time.time(); pipeline = []
     if filter == 'daily': pipeline.append({"$match": {"ts": {"$gt": now - 86400}}})
     elif filter == 'weekly': pipeline.append({"$match": {"ts": {"$gt": now - 604800}}})
     
