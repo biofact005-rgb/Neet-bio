@@ -354,8 +354,8 @@ def delete_item():
 # ==========================================
 # 🎯 DAILY GOAL & ACTIVITY TRACKER
 # ==========================================
-from datetime import datetime
-import pytz 
+from datetime import datetime, timedelta, timezone
+
 
 def get_today_date():
     # India Timezone (IST) taaki date sahi rahe
