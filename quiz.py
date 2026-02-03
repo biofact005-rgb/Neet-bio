@@ -6,9 +6,7 @@ from pymongo import MongoClient
 import threading, os, time
 import certifi 
 import json
-from datetime import datetime
-import pytz # Timezone ke liye (Optional but recommended for India time)
-
+from datetime import datetime, timedelta, timezone
 
 
 # ==========================================
@@ -361,7 +359,8 @@ import pytz
 
 def get_today_date():
     # India Timezone (IST) taaki date sahi rahe
-    IST = pytz.timezone('Asia/Kolkata')
+    IST = timezone(timedelta(hours=5, minutes=30))
+    
     return datetime.now(IST).strftime('%Y-%m-%d')
 
 @app.route('/api/update_activity', methods=['POST'])
