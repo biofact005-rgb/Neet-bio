@@ -352,6 +352,22 @@
             </div>
         </div>
 
+        <div class="glass-box" style="margin: 15px 0; padding: 15px; border: 1px solid #333;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="color:#aaa; font-size:0.9rem;">🚀 DAILY TARGET</span>
+        <span id="goal-text" style="color:var(--primary); font-weight:bold; font-family:'Orbitron';">0 / 50</span>
+    </div>
+    
+    <div style="width:100%; height:10px; background:#222; border-radius:10px; overflow:hidden; position:relative;">
+        <div id="goal-bar" style="width:0%; height:100%; background:linear-gradient(90deg, var(--primary), #22d3ee); transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--primary);"></div>
+    </div>
+    
+    <div id="goal-msg" style="font-size:0.75rem; color:#666; margin-top:8px; text-align:right;">
+        Keep going! 🔥
+    </div>
+</div>
+
+
         <div style="margin-top:20px;">
             <div class="allen-btn" onclick="transitionTo(['Allen'])">
                 <div class="allen-text">ALLEN</div>
@@ -486,6 +502,16 @@
         document.getElementById('tog-vib').checked = settings.vib;
         
         sync();
+        document.getElementById('tog-sound').checked = settings.sound;
+        document.getElementById('tog-vib').checked = settings.vib;
+        
+        sync();
+        loadDailyGoal(); // ✅ YAHAN ADD KAR DO (Is line ko copy-paste karo)
+
+// Floating Text Logic starts below...
+function showFloatingText(x, y, text, type) {
+
+            
 // Floating Text Logic
 function showFloatingText(x, y, text, type) {
     let el = document.createElement('div');
@@ -687,6 +713,8 @@ function showFloatingText(x, y, text, type) {
     let x = event ? event.clientX : window.innerWidth / 2;
     let y = event ? event.clientY : window.innerHeight / 2;
 
+            trackQuestionProgress(); 
+            
     if(i === q.ans) {
         // --- SAHI JAWAB ---
         if(btn) btn.classList.add('correct');
@@ -789,6 +817,58 @@ function showFloatingText(x, y, text, type) {
             if(!confirm(`Delete "${target}"?`)) return;
             fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
         }
+
+        let dailyTarget = 50; // Aap isse change kar sakte hain
+
+// 1. App khulte hi Goal load karo
+function loadDailyGoal() {
+    if(!user || !user.id) return; // Safety check
+
+    fetch(`/api/get_daily_goal?uid=${user.id}`)
+    .then(r => r.json())
+    .then(data => {
+        updateGoalUI(data.progress);
+    })
+    .catch(e => console.error("Goal load error:", e));
+}
+
+// 2. UI ko update karne ka function
+function updateGoalUI(count) {
+    let percentage = (count / dailyTarget) * 100;
+    if(percentage > 100) percentage = 100;
+    
+    // Text aur Bar update karo
+    document.getElementById('goal-text').innerText = `${count} / ${dailyTarget}`;
+    document.getElementById('goal-bar').style.width = `${percentage}%`;
+    
+    // Message change karo
+    let msgBox = document.getElementById('goal-msg');
+    if(count === 0) {
+        msgBox.innerText = "Start your streak! 🔥";
+        msgBox.style.color = "#888";
+    } else if(count >= dailyTarget) {
+        msgBox.innerHTML = "🎉 Target Achieved! Awesome! 🎉";
+        msgBox.style.color = "var(--gold)";
+        // Optional: Goal pura hone par vibration
+        if(settings.vib) tg.HapticFeedback.notificationOccurred('success');
+    } else {
+        msgBox.innerText = `${dailyTarget - count} more to go. Keep pushing! 💪`;
+        msgBox.style.color = "var(--primary)";
+    }
+}
+
+// 3. Sawal solve hone par server ko batao
+function trackQuestionProgress() {
+    fetch('/api/update_activity', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({uid: user.id, count: 1})
+    });
+    // Note: Hum turant UI update nahi kar rahe, agli baar home screen load hone par update hoga.
+    // Agar turant chahiye toh yahan current count badhakar updateGoalUI call kar sakte hain.
+}
+
+        
     </script>
 </body>
 </html>
