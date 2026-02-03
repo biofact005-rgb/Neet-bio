@@ -32,6 +32,97 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
             pointer-events: none; display: flex;
         }
+
+/* --- PODIUM LEADERBOARD --- */
+.podium-box {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Niche se align taaki height difference dikhe */
+    margin-bottom: 40px;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+.podium-item {
+    text-align: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Avatar Circle Styling */
+.p-avatar-box {
+    position: relative;
+    padding: 4px; /* Border ki motai */
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(0,0,0,0));
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.p-img {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #1a1a1a; /* Inner border */
+    background: #000;
+}
+
+/* Rank 1 (Gold) - Sabse Bada */
+.rank-1-box .p-avatar-box {
+    width: 100px; height: 100px;
+    background: linear-gradient(45deg, #FFD700, #FDB931, #FFD700);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    z-index: 10;
+}
+.rank-1-box { transform: translateY(-20px); } /* Thoda upar utha hua */
+.crown {
+    position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+    font-size: 2rem; filter: drop-shadow(0 0 10px gold);
+    animation: floatCrown 2s infinite ease-in-out;
+}
+
+/* Rank 2 (Silver) */
+.rank-2-box .p-avatar-box {
+    width: 80px; height: 80px;
+    background: linear-gradient(45deg, #C0C0C0, #E0E0E0, #C0C0C0);
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.5);
+}
+
+/* Rank 3 (Bronze) */
+.rank-3-box .p-avatar-box {
+    width: 80px; height: 80px;
+    background: linear-gradient(45deg, #CD7F32, #B87333, #CD7F32);
+    box-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
+}
+
+/* Names & Scores */
+.p-name {
+    font-size: 0.8rem; font-weight: bold; margin-top: 10px;
+    color: #fff; width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.p-score {
+    font-family: 'Orbitron'; font-size: 0.9rem; color: var(--primary);
+    background: rgba(74, 222, 128, 0.1); padding: 2px 8px; border-radius: 10px; margin-top: 4px;
+}
+
+/* Rank Badge (Circle ke neeche number) */
+.p-badge {
+    position: absolute; bottom: -10px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #111; border: 2px solid #333;
+    color: white; font-size: 0.7rem; font-weight: bold;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.rank-1-box .p-badge { background: #FFD700; color: black; border-color: #FFD700; }
+.rank-2-box .p-badge { background: #C0C0C0; color: black; border-color: #C0C0C0; }
+.rank-3-box .p-badge { background: #CD7F32; color: black; border-color: #CD7F32; }
+
+@keyframes floatCrown { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -5px); } }
+
+        
         .door-panel {
             width: 50%; height: 100%; background: #000; position: relative;
             transition: transform 0.5s cubic-bezier(0.8, 0, 0.2, 1);
@@ -210,6 +301,31 @@
 
         input { width: 100%; background: #0a0a0a; border: 1px solid #333; color: white; padding: 15px; border-radius: 12px; margin: 10px 0; font-family: 'Orbitron'; outline: none; font-size: 1.1rem; }
         input:focus { border-color: var(--primary); }
+
+       /* --- FIX: SCROLLABLE LIST, FIXED BUTTONS --- */
+#folder-screen {
+    overflow: hidden !important; /* Poori screen scroll hona band */
+}
+
+#folder-list {
+    flex: 1;            /* Bachi hui saari jagah le lega */
+    overflow-y: auto;   /* Sirf ye list scroll karegi */
+    width: 100%;
+    min-height: 0;      /* Flexbox glitch fix karne ke liye */
+    margin-bottom: 15px; /* Button se thoda gap */
+    padding-right: 5px;  /* Scrollbar ke liye jagah */
+}
+
+/* Optional: Scrollbar ko thoda sundar banane ke liye */
+#folder-list::-webkit-scrollbar {
+    width: 5px;
+}
+#folder-list::-webkit-scrollbar-thumb {
+    background: var(--primary); 
+    border-radius: 10px;
+}
+
+        
     </style>
 </head>
 <body id="body">
@@ -260,6 +376,7 @@
             <div class="lb-tab" onclick="loadLb('weekly', this)">Weekly</div>
             <div class="lb-tab" onclick="loadLb('all', this)">Overall</div>
         </div>
+        <div id="podium-area" class="podium-box"></div>   
         <div id="lb-list"></div>
     </div>
 
@@ -554,38 +671,54 @@ function showFloatingText(x, y, text, type) {
             if(timer-- <= 0) check(-1, null);
         }
 
-function check(i, btn, event) {
-    clearInterval(tInt);
+        
+
+        function check(i, btn, event) {
+    clearInterval(tInt); // Timer roko
     let q = questions[curr];
-    document.querySelectorAll('.opt-btn').forEach(d=>d.onclick=null);
+    
+    // Buttons disable karo
+    let allOptions = document.querySelectorAll('.opt-btn');
+    allOptions.forEach(d => d.onclick = null);
     
     if(settings.sound) sfxClick.play();
 
-    // Click coordinates nikalo (Agar time khatam hua to screen ke beech me dikhao)
+    // Click coordinates (Animation ke liye)
     let x = event ? event.clientX : window.innerWidth / 2;
     let y = event ? event.clientY : window.innerHeight / 2;
 
     if(i === q.ans) {
+        // --- SAHI JAWAB ---
         if(btn) btn.classList.add('correct');
-        score += 4; // Aapne +4 bola tha
-        showFloatingText(x, y, "+4", "win"); // ✨ EFFECT
+        score += 4;
+        showFloatingText(x, y, "+4", "win");
         
         if(settings.vib) tg.HapticFeedback.impactOccurred('light');
         if(mode==='mistake') solvedMistakes.push(q.q);
     } else {
-        if(btn) btn.classList.add('wrong');
-        document.querySelectorAll('.opt-btn')[q.ans].classList.add('correct');
-        score -= 1; // -1 effect
+        // --- GALAT JAWAB ---
+        if(btn) btn.classList.add('wrong'); // Jo dabaya use Red karo
+        
+        // ✨ FIX: Sahi wale ko Green karo (Safety Check ke saath)
+        if(allOptions[q.ans]) {
+            allOptions[q.ans].classList.add('correct');
+        }
+        
+        score -= 1;
         wrongCount++;
-        showFloatingText(x, y, "-1", "loss"); // ✨ EFFECT
+        showFloatingText(x, y, "-1", "loss");
         
         if(settings.sound) sfxErr.play();
         if(settings.vib) tg.HapticFeedback.notificationOccurred('error');
         if(mode!=='mistake') mistakes.push(q);
     }
+
     document.getElementById('curr-score').innerText = score;
-    setTimeout(()=>{ curr++; loadQ(); }, 1000); 
+    
+    // 1.5 Second ka wait taaki user sahi answer dekh sake
+    setTimeout(()=>{ curr++; loadQ(); }, 1500); 
 }
+
 
 
         
@@ -608,21 +741,44 @@ function check(i, btn, event) {
             selChaps = []; 
             sync(score);
         }
-
+        
         function loadLb(filter, btn) {
-            if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
-            fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
-                let list = document.getElementById('lb-list'); list.innerHTML='';
-                d.top.forEach(u => {
-                    let rankClass = u.rank === 1 ? 'rank-1' : (u.rank === 2 ? 'rank-2' : (u.rank === 3 ? 'rank-3' : ''));
-                    let color = u.rank <= 3 ? '#fff' : '#aaa';
-                    let div = document.createElement('div'); div.className = `rank-card ${rankClass}`;
-                    div.style.color = color;
-                    div.innerHTML = `<span style="font-weight:600">#${u.rank} ${u.name}</span> <span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
-                    list.appendChild(div);
-                });
+          if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
+    
+            document.getElementById('lb-list').innerHTML = '<div style="text-align:center; color:#555;">Fetching ranks...</div>';
+             document.getElementById('podium-area').innerHTML = ''; // Clear podium
+
+             fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
+               let list = document.getElementById('lb-list'); 
+                 let podium = document.getElementById('podium-area');
+                 list.innerHTML=''; podium.innerHTML='';
+         
+               let top3 = d.top.slice(0, 3);
+              let rest = d.top.slice(3);
+
+        // --- PODIUM (Top 3) ---
+        let html = '';
+        const makeCard = (u, rank) => {
+            if(!u) return ''; 
+            let pic = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; 
+            return `<div class="podium-item rank-${rank}-box">${rank === 1 ? '<div class="crown">👑</div>' : ''}<div class="p-avatar-box"><img class="p-img" src="${pic}"><div class="p-badge">${rank}</div></div><div class="p-name">${u.name}</div><div class="p-score">${u.score}</div></div>`;
+        };
+        // Order: 2nd (Left), 1st (Center), 3rd (Right)
+        if(top3[1]) html += makeCard(top3[1], 2);
+        if(top3[0]) html += makeCard(top3[0], 1);
+        if(top3[2]) html += makeCard(top3[2], 3);
+        podium.innerHTML = html;
+
+        // --- LIST (Rest) ---
+        rest.forEach(u => {
+            let div = document.createElement('div'); div.className = `rank-card`; div.style.color = '#aaa';
+            div.innerHTML = `<span style="font-weight:600; width:30px;">#${u.rank}</span><span style="flex:1; margin-left:10px;">${u.name}</span><span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
+            list.appendChild(div);
+        });
+        if(d.top.length === 0) list.innerHTML = '<div style="text-align:center; margin-top:20px; color:#666;">No data yet!</div>';
             });
-        }
+            }
+
 
         function saveSet() { 
             settings.sound = document.getElementById('tog-sound').checked; 
