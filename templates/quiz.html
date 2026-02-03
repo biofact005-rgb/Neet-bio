@@ -8,10 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-home: #051405; 
-            --bg-quiz: #080a08; 
+            --bg-home: #051405; /* Deep Jungle Green */
+            --bg-quiz: #080a08; /* Soft Dark Grey (Not Pitch Black) */
             --bg-prof: #010400; 
-            --primary: #4ade80; 
+            --primary: #4ade80; /* Neon Leaf */
             --gold: #FFD700;
             --silver: #C0C0C0;
             --bronze: #CD7F32;
@@ -27,7 +27,7 @@
             margin: 0; height: 100vh; overflow: hidden; position: relative; transition: background 0.6s ease;
         }
 
-        /* --- 1. ANIMATIONS (DOOR & LEAVES) RESTORED --- */
+        /* --- 1. DHAMAKEDAR SPLIT DOOR TRANSITION --- */
         .door-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
             pointer-events: none; display: flex;
@@ -41,11 +41,12 @@
         .door-left { transform: translateX(-102%); border-right: 2px solid var(--primary); }
         .door-right { transform: translateX(102%); border-left: 2px solid var(--primary); }
         
+        /* Active State (Closed) */
         .door-closed .door-left { transform: translateX(0); }
         .door-closed .door-right { transform: translateX(0); }
         .door-closed { pointer-events: all; }
 
-        /* Crack Light Effect */
+        /* Crack Light Effect (Beech me se light niklegi) */
         .door-closed::after {
             content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 4px; height: 100%; background: var(--primary);
@@ -54,6 +55,8 @@
         }
         @keyframes crackFlash { from { opacity: 0.4; height: 0%; } to { opacity: 1; height: 100%; } }
 
+        /* --- 2. BACKGROUND ANIMATIONS --- */
+        /* Falling Leaves (Home) */
         .leaf {
             position: absolute; top: -10%; width: 15px; height: 15px;
             background: rgba(74, 222, 128, 0.2); border-radius: 2px 12px;
@@ -64,9 +67,20 @@
             100% { top: 110%; transform: translateX(40px) rotate(360deg); opacity: 0; }
         }
 
+        /* Tree Background (Profile) */
+        .tree-bg {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; height: 50%; 
+            /* Simple Tree Silhouette URL */
+            background-image: url('https://cdn-icons-png.flaticon.com/512/490/490091.png'); 
+            background-repeat: no-repeat; background-position: bottom center; background-size: contain;
+            opacity: 0.1; pointer-events: none; z-index: 0; filter: invert(1);
+        }
+
         /* --- UI COMPONENTS --- */
         .screen { display: none; flex-direction: column; height: 100%; padding: 20px; padding-bottom: 90px; overflow-y: auto; z-index: 5; position: relative; }
         
+        /* Realistic Water Card */
         .water-card {
             width: 100%; height: 170px; position: relative; overflow: hidden;
             background: rgba(255,255,255,0.03); border: var(--border); border-radius: 24px;
@@ -83,6 +97,7 @@
         
         .id-pic { width: 75px; height: 75px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; margin-right: 20px; background: #000; z-index: 2; box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); }
 
+        /* Holographic Allen Button */
         .allen-btn {
             width: 100%; padding: 35px; background: linear-gradient(160deg, #0f2e0f, #020a02);
             border: 1px solid var(--primary); border-radius: 24px; text-align: center;
@@ -90,13 +105,20 @@
             transition: 0.3s;
         }
         .allen-btn:active { transform: scale(0.97); }
+        .allen-btn::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(74, 222, 128, 0.1), transparent 60%);
+            animation: spin 8s linear infinite; pointer-events: none;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         .allen-text { font-family: 'Orbitron'; font-size: 2rem; font-weight: 900; color: var(--primary); letter-spacing: 4px; text-shadow: 0 0 10px rgba(74,222,128,0.4); position: relative; z-index: 2; }
 
-        /* --- 2. RESTORED: FLASHLIGHT GLOW ON QUIZ BOX --- */
+        /* --- QUIZ UI (FLASHLIGHT EFFECT) --- */
         .q-container { 
             background: #0f0f0f; border: 1px solid #333; border-radius: 18px; padding: 25px; margin-bottom: 25px;
-            position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); z-index: 2;
+            position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8);
         }
+        /* Flashlight Glow Animation */
         .q-container::after {
             content: ''; position: absolute; top: -50%; left: 0%; width: 100%; height: 200%;
             background: radial-gradient(circle, rgba(74, 222, 128, 0.08) 0%, transparent 70%);
@@ -104,55 +126,90 @@
         }
         @keyframes pulseLight { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.1); } }
 
-        /* --- 3. FLOATING +4 / -1 ANIMATION --- */
-        .float-score {
-            position: fixed; font-family: 'Orbitron'; font-weight: 900; font-size: 2rem;
-            pointer-events: none; z-index: 9999; animation: floatUp 0.8s ease-out forwards;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        .opt-btn {
+            width: 100%; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; color: #ddd; font-size: 1rem;
+            transition: 0.2s; position: relative; overflow: hidden; text-align: left;
+            display: flex; align-items: center;
         }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        .opt-btn:active { background: rgba(74, 222, 128, 0.05); }
+
+        /* --- FLOATING SCORE EFFECT --- */
+.float-score {
+    position: fixed;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.8rem;
+    pointer-events: none; /* Click Roke nahi */
+    z-index: 10000;
+    animation: floatUp 0.8s ease-out forwards;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+@keyframes floatUp {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    50% { transform: translate(-50%, -100%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+}
+
+
+        /* Multi-Select Styling */
+        .check-circle { 
+            width: 22px; height: 22px; border: 2px solid #555; border-radius: 6px; margin-right: 15px; 
+            display: none; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;
         }
+        .show-check .check-circle { display: flex; }
+        .selected-opt { border-color: var(--primary); background: rgba(74, 222, 128, 0.1); }
+        .selected-opt .check-circle { background: var(--primary); border-color: var(--primary); color: black; }
 
-        .podium-container { display: flex; justify-content: center; align-items: flex-end; height: 160px; margin-bottom: 30px; gap: 15px; }
-        .podium-item { text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .p-avatar { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #333; object-fit: cover; box-shadow: 0 0 15px rgba(0,0,0,0.5); margin-bottom: 5px; }
-        .rank-badge { width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #000; position: absolute; bottom: 25px; right: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .p-name { font-size: 0.7rem; color: #aaa; width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .p-score { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--primary); }
-        .p-first .p-avatar { width: 90px; height: 90px; border: 3px solid var(--gold); box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); }
-        .p-first .rank-badge { background: var(--gold); bottom: 40px; width: 30px; height: 30px; }
-        .p-first { transform: translateY(-10px); }
-        .p-second .p-avatar { border-color: var(--silver); }
-        .p-second .rank-badge { background: var(--silver); }
-        .p-third .p-avatar { border-color: var(--bronze); }
-        .p-third .rank-badge { background: var(--bronze); }
+        .correct { background: rgba(74, 222, 128, 0.2) !important; border-color: var(--primary) !important; color: var(--primary); box-shadow: 0 0 15px rgba(74, 222, 128, 0.2); }
+        .wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--danger) !important; color: var(--danger); }
 
-        .rank-card { display: flex; justify-content: space-between; padding: 12px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.05); }
+        /* STOP BUTTON */
+        .stop-btn {
+            width: 100%; padding: 16px; margin-top: 25px;
+            background: rgba(239, 68, 68, 0.08); border: 1px solid var(--danger); color: var(--danger);
+            border-radius: 12px; font-weight: bold; font-family: 'Orbitron'; letter-spacing: 1px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            transition: 0.2s;
+        }
+        .stop-btn:active { background: var(--danger); color: black; }
 
-        .ref-card { background: linear-gradient(135deg, #0f2e0f 0%, #000 100%); border: 1px solid var(--primary); border-radius: 20px; padding: 20px; margin-bottom: 20px; text-align: center; }
-        .milestone-box { display: flex; justify-content: space-between; margin-top: 15px; }
-        .m-item { width: 30%; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; text-align: center; border: 1px solid #333; opacity: 0.5; transition: 0.3s; }
-        .m-active { opacity: 1; border-color: var(--primary); background: rgba(74, 222, 128, 0.1); cursor: pointer; }
-        .m-claimed { opacity: 0.6; border-color: var(--gold); color: var(--gold); }
-        
-        .dock-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; height: 70px; background: rgba(5, 12, 5, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 40px; display: flex; justify-content: space-evenly; align-items: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 100; }
-        .dock-item { font-size: 1.5rem; color: #444; transition: 0.3s; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 50%; }
+        /* --- LEADERBOARD & DOCK --- */
+        .rank-card {
+            display: flex; justify-content: space-between; padding: 15px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.03); border-radius: 12px; font-size: 0.9rem;
+        }
+        .rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), transparent); border-left: 4px solid var(--gold); color: var(--gold); }
+        .rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), transparent); border-left: 4px solid var(--silver); color: var(--silver); }
+        .rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.15), transparent); border-left: 4px solid var(--bronze); color: var(--bronze); }
+
+        .dock-container {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 350px; height: 70px;
+            background: rgba(5, 12, 5, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 40px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 100;
+        }
+        .dock-item { font-size: 1.6rem; color: #444; transition: 0.3s; width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; border-radius: 50%; }
         .active-dock { color: var(--primary); transform: translateY(-10px); text-shadow: 0 0 20px var(--primary); background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.1); }
 
+        /* UTILS */
         .glass-box { background: rgba(255,255,255,0.02); border: var(--border); border-radius: 16px; padding: 18px; margin-bottom: 15px; }
-        .opt-btn { width: 100%; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; color: #ddd; position: relative; overflow: hidden; text-align: left; display: flex; align-items: center; }
-        .correct { background: rgba(74, 222, 128, 0.2) !important; border-color: var(--primary) !important; color: var(--primary); }
-        .wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--danger) !important; color: var(--danger); }
+        .lb-tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; font-size: 0.8rem; transition: 0.3s; border-radius: 20px; font-weight: 600; }
+        .lb-tab.active { background: var(--primary); color: #000; box-shadow: 0 0 10px rgba(74, 222, 128, 0.4); }
         
+        /* Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #222; transition: .4s; border-radius: 24px; border: 1px solid #444; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #888; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: rgba(74, 222, 128, 0.2); border-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary); }
+
         input { width: 100%; background: #0a0a0a; border: 1px solid #333; color: white; padding: 15px; border-radius: 12px; margin: 10px 0; font-family: 'Orbitron'; outline: none; font-size: 1.1rem; }
+        input:focus { border-color: var(--primary); }
     </style>
 </head>
 <body id="body">
@@ -161,7 +218,9 @@
         <div class="door-panel door-left"></div>
         <div class="door-panel door-right"></div>
     </div>
+
     <div id="leaves"></div>
+    <div id="tree-bg" style="display:none;"><div class="tree-bg"></div></div>
 
     <div id="home-screen" class="screen" style="display:flex;">
         <h2 style="text-align:center; font-family:'Orbitron'; color:var(--primary); letter-spacing:2px; text-shadow:0 0 20px rgba(74,222,128,0.2);">NEET PRO</h2>
@@ -169,7 +228,7 @@
         <div class="water-card">
             <div class="water-wave" id="w1"></div>
             <div class="water-wave" id="w2"></div>
-            <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+            <img id="u-pic" class="id-pic" src="https://wallpapers.com/images/hd/cool-anime-boy-pfp-v4-358-x-358-px-98s7x6h36n5z2g3w.jpg">
             <div style="flex:1; z-index:2; padding-left:15px;">
                 <span style="background:var(--primary); color:black; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
                 <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0;">Doctor</div>
@@ -197,44 +256,11 @@
     <div id="lb-screen" class="screen">
         <h2 style="text-align:center; color:var(--gold); font-family:'Orbitron'; margin-bottom:20px;">TOP 100</h2>
         <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:25px; padding:5px; margin-bottom:25px; border:1px solid #222;">
-            <div class="lb-tab active" onclick="loadLb('daily', this)" style="flex:1;text-align:center;padding:10px;cursor:pointer;border-radius:20px;">Daily</div>
-            <div class="lb-tab" onclick="loadLb('weekly', this)" style="flex:1;text-align:center;padding:10px;cursor:pointer;border-radius:20px;">Weekly</div>
-            <div class="lb-tab" onclick="loadLb('all', this)" style="flex:1;text-align:center;padding:10px;cursor:pointer;border-radius:20px;">All</div>
+            <div class="lb-tab active" onclick="loadLb('daily', this)">Daily</div>
+            <div class="lb-tab" onclick="loadLb('weekly', this)">Weekly</div>
+            <div class="lb-tab" onclick="loadLb('all', this)">Overall</div>
         </div>
-        <div id="podium" class="podium-container"></div>
         <div id="lb-list"></div>
-    </div>
-
-    <div id="refer-screen" class="screen">
-        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">REFER & EARN</h2>
-        <div class="ref-card">
-            <div style="font-size:3rem; margin-bottom:10px;">🎁</div>
-            <div style="font-weight:700; font-size:1.2rem; color:white;">Invite Friends & Win</div>
-            <div style="color:#aaa; font-size:0.9rem; margin:10px 0;">Unlock exclusive premium PDF files by inviting other future doctors.</div>
-            <div class="glass-box" style="margin-top:20px; display:flex; align-items:center; padding:10px; background:#000;">
-                <div id="my-link" style="font-size:0.8rem; color:#888; flex:1; overflow:hidden; white-space:nowrap; text-align:left;">Loading...</div>
-                <button onclick="copyLink()" style="background:var(--primary); border:none; border-radius:8px; padding:5px 10px; font-weight:bold; font-size:0.8rem;">COPY</button>
-            </div>
-            <div style="margin-top:20px; font-family:'Orbitron'; color:var(--primary);">YOUR INVITES: <span id="ref-count" style="color:white; font-size:1.5rem;">0</span></div>
-        </div>
-        <h3 style="font-family:'Orbitron'; color:#fff; margin-bottom:10px;">MILESTONES</h3>
-        <div class="milestone-box">
-            <div class="m-item" id="ms-2" onclick="claim(2)">
-                <div style="font-size:1.5rem;">📜</div>
-                <div style="font-size:0.8rem; margin-top:5px;">2 Invites</div>
-                <div class="status-txt" style="font-size:0.6rem; color:#aaa;">LOCKED</div>
-            </div>
-            <div class="m-item" id="ms-5" onclick="claim(5)">
-                <div style="font-size:1.5rem;">📂</div>
-                <div style="font-size:0.8rem; margin-top:5px;">5 Invites</div>
-                <div class="status-txt" style="font-size:0.6rem; color:#aaa;">LOCKED</div>
-            </div>
-            <div class="m-item" id="ms-10" onclick="claim(10)">
-                <div style="font-size:1.5rem;">📚</div>
-                <div style="font-size:0.8rem; margin-top:5px;">10 Invites</div>
-                <div class="status-txt" style="font-size:0.6rem; color:#aaa;">LOCKED</div>
-            </div>
-        </div>
     </div>
 
     <div id="profile-screen" class="screen">
@@ -250,60 +276,69 @@
         <div class="glass-box" onclick="tg.openTelegramLink('https://t.me/errorkid_05')" style="display:flex; align-items:center; cursor:pointer;">
             <span style="font-size:1.4rem; margin-right:15px;">📢</span> <span style="font-weight:600;">Join Channel</span>
         </div>
+        <div class="glass-box" onclick="tg.openTelegramLink('https://t.me/share/url?url=https://t.me/errorkid_05')" style="display:flex; align-items:center; cursor:pointer;">
+            <span style="font-size:1.4rem; margin-right:15px;">📤</span> <span style="font-weight:600;">Share App</span>
+        </div>
     </div>
 
     <div id="folder-screen" class="screen">
         <h3 id="folder-title" style="text-align:center; font-family:'Orbitron'; color:var(--primary);">ARCHIVE</h3>
+        <div style="text-align:center; margin-bottom:15px; color:#666; font-size:0.8rem;">Select one or more chapters</div>
         <div id="folder-list"></div>
-        <button id="config-btn" onclick="showSetup()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; color:#000; font-weight:800; font-family:'Orbitron'; margin-top:20px; display:none;">START PRACTICE</button>
-        <button onclick="transitionTo(null, 'back')" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">BACK</button>
+        <button id="config-btn" onclick="showSetup()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; color:#000; font-weight:800; font-family:'Orbitron'; margin-top:20px; display:none; box-shadow:0 0 20px rgba(74,222,128,0.4);">START PRACTICE</button>
+        <button onclick="transitionTo(null, 'back')" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px; font-weight:600;">BACK</button>
     </div>
 
     <div id="setup-screen" class="screen" style="justify-content:center;">
-        <h2 style="text-align:center; color:var(--primary);">CONFIG</h2>
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron'; margin-bottom:30px;">CONFIG</h2>
         <div class="glass-box">
-            <label style="color:#aaa;">Questions (Max 500)</label> <input type="number" id="q-limit" value="20">
-            <label style="color:#aaa; margin-top:20px;">Time (Max 120s)</label> <input type="number" id="q-timer" value="30">
+            <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px;">Questions (Max 500)</label>
+            <input type="number" id="q-limit" value="20" placeholder="20" max="500">
+            <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px; margin-top:20px;">Time (Max 120s)</label>
+            <input type="number" id="q-timer" value="30" placeholder="30" max="120">
         </div>
-        <button onclick="finalStart()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; margin-top:10px;">EXPAND DOMAIN</button>
+        <button onclick="finalStart()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; font-family:'Orbitron'; margin-top:10px;">EXPAND DOMAIN</button>
         <button onclick="document.getElementById('setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
     </div>
 
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; z-index:2;">
-            <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px;" id="timer-box">30s</div>
-            <div style="color:var(--primary); font-family:'Orbitron';">XP: <span id="curr-score">0</span></div>
+            <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
+            <div style="color:var(--primary); font-family:'Orbitron'; font-size:1.1rem;">XP: <span id="curr-score">0</span></div>
         </div>
         
         <div class="q-container">
             <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
         </div>
-        
         <div id="opts" style="z-index:2; position:relative;"></div>
-        <button onclick="finishQuiz()" style="width:100%; padding:16px; margin-top:25px; background:rgba(239, 68, 68, 0.1); border:1px solid var(--danger); color:var(--danger); border-radius:12px;">🛑 STOP & SUBMIT</button>
+
+        <div class="stop-btn" onclick="finishQuiz()">🛑 STOP & SUBMIT</div>
     </div>
 
     <div id="result-screen" class="screen" style="justify-content:center; text-align:center;">
-        <h2 style="color:var(--primary); font-family:'Orbitron';">RESULT</h2>
-        <div style="font-size:4rem; font-weight:800; font-family:'Orbitron'; margin:10px 0;" id="final-score">0</div>
+        <h2 style="color:var(--primary); font-family:'Orbitron'; letter-spacing:2px;">RESULT</h2>
+        <div style="font-size:4rem; font-weight:800; font-family:'Orbitron'; margin:10px 0; text-shadow:0 0 30px rgba(74,222,128,0.3);" id="final-score">0</div>
+        <div style="color:#aaa; font-size:0.9rem; margin-bottom:30px;">XP GAINED</div>
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%;">
-            <div class="glass-box"><div style="color:var(--primary); font-size:1.5rem;" id="res-acc">0%</div><div>Accuracy</div></div>
-            <div class="glass-box"><div style="color:var(--danger); font-size:1.5rem;" id="res-wrong">0</div><div>Mistakes</div></div>
+            <div class="glass-box" style="padding:15px;"><div style="color:var(--primary); font-size:1.5rem; font-family:'Orbitron';" id="res-acc">0%</div><div style="font-size:0.75rem; color:#888;">Accuracy</div></div>
+            <div class="glass-box" style="padding:15px;"><div style="color:var(--danger); font-size:1.5rem; font-family:'Orbitron';" id="res-wrong">0</div><div style="font-size:0.75rem; color:#888;">Mistakes</div></div>
+            <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-time">0s</div><div style="font-size:0.75rem; color:#888;">Time Taken</div></div>
+            <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-total">0</div><div style="font-size:0.75rem; color:#888;">Questions</div></div>
         </div>
-        <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none;">HOME</button>
+        <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
     </div>
 
     <div class="dock-container">
         <div class="dock-item active-dock" onclick="switchTheme('home'); tab('home', this)">🏠</div>
         <div class="dock-item" onclick="switchTheme('home'); tab('lb', this)">🏆</div>
-        <div class="dock-item" onclick="switchTheme('prof'); tab('refer', this)">🎁</div>
-        <div class="dock-item" onclick="switchTheme('prof'); tab('profile', this)">⚙️</div>
+        <div class="dock-item" onclick="switchTheme('prof'); tab('profile', this)">👤</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand(); tg.setHeaderColor('#051405');
-        const user = tg.initDataUnsafe.user || {id: 123, first_name: "Doctor", username: "doc"};
+        const user = tg.initDataUnsafe.user || {id: 123, first_name: "Doctor"};
 
         // LEAF ANIMATION
         const leavesContainer = document.getElementById('leaves');
@@ -315,43 +350,61 @@
             leavesContainer.appendChild(leaf);
         }
 
+        // STATE
         let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], solvedMistakes = [];
         let curr = 0, score = 0, timer = 30, tInt, wrongCount = 0;
         let mode = 'normal';
         let settings = JSON.parse(localStorage.getItem('jjk_set')) || {sound: true, vib: true};
         let startTime, endTime;
         
+        // SOUNDS
         const sfxClick = new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3");
         const sfxErr = new Audio("https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3");
         
         document.getElementById('u-name').innerText = user.first_name;
         if(user.photo_url) document.getElementById('u-pic').src = user.photo_url;
         if(user.id == 8557964907) document.getElementById('admin-btn').style.display='block';
-
+        
         document.getElementById('tog-sound').checked = settings.sound;
         document.getElementById('tog-vib').checked = settings.vib;
         
         sync();
+// Floating Text Logic
+function showFloatingText(x, y, text, type) {
+    let el = document.createElement('div');
+    el.className = 'float-score';
+    el.innerText = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    
+    // Color set karein
+    if(type === 'win') el.style.color = 'var(--primary)'; // Green
+    else el.style.color = 'var(--danger)'; // Red
+    
+    document.body.appendChild(el);
+    
+    // 1 second baad delete kar do taaki memory na bhare
+    setTimeout(() => { el.remove(); }, 1000);
+}
 
+        
+
+        
+        // --- SPLIT TRANSITION LOGIC ---
         function transitionTo(p, action) {
             let door = document.getElementById('door-overlay');
-            door.classList.add('door-closed'); 
+            door.classList.add('door-closed'); // Close Door
+            
             setTimeout(() => {
-                if(action === 'back') back(); else nav(p);
-                setTimeout(() => door.classList.remove('door-closed'), 500);
-            }, 600);
+                if(action === 'back') back();
+                else nav(p);
+                
+                // Open Door after small delay
+                setTimeout(() => {
+                    door.classList.remove('door-closed');
+                }, 500);
+            }, 600); // Wait for close animation
         }
-
-        function tab(t, btn) {
-            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-            let sId = t==='home'?'home-screen':(t==='lb'?'lb-screen':(t==='refer'?'refer-screen':'profile-screen'));
-            document.getElementById(sId).style.display='flex';
-            document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
-            if(btn) btn.classList.add('active-dock');
-            if(t==='lb') loadLb('daily');
-            if(t==='refer') loadRef();
-        }
-        function switchTheme(t) { document.body.style.background = (t==='quiz') ? '#080a08' : '#051405'; }
 
         function sync(addScore=0) {
             fetch('/api/get_data').then(r=>r.json()).then(d=> fullData=d);
@@ -361,7 +414,9 @@
             }).then(r=>r.json()).then(d => {
                 document.getElementById('u-grade').innerText = d.grade;
                 document.getElementById('xp-nums').innerText = `${d.current_xp} / ${d.req_xp}`;
-                let h = d.percent + "%"; document.getElementById('w1').style.height = h; document.getElementById('w2').style.height = h;
+                let h = d.percent;
+                document.getElementById('w1').style.height = h + "%";
+                document.getElementById('w2').style.height = h + "%";
                 if(d.mistake_count > 0) {
                     document.getElementById('curse-box').style.display = 'block';
                     document.getElementById('curse-count').innerText = d.mistake_count;
@@ -371,108 +426,213 @@
             });
         }
 
-        function loadLb(filter, btn) {
-            if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); btn.style.background='var(--primary)'; btn.style.color='#000'; }
-            fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
-                let list = document.getElementById('lb-list'); list.innerHTML='';
-                let podium = document.getElementById('podium'); podium.innerHTML='';
-                let top3 = d.top.slice(0, 3); let rest = d.top.slice(3);
-                let pOrder = [1, 0, 2];
-                pOrder.forEach(idx => {
-                    if(!top3[idx]) return;
-                    let u = top3[idx];
-                    let cls = idx === 0 ? 'p-first' : (idx === 1 ? 'p-second' : 'p-third');
-                    podium.innerHTML += `<div class="podium-item ${cls}"><img src="https://ui-avatars.com/api/?name=${u.name}&background=random" class="p-avatar"><div class="rank-badge">${u.rank}</div><div class="p-name">${u.name}</div><div class="p-score">${u.score}</div></div>`;
-                });
-                rest.forEach(u => {
-                    list.innerHTML += `<div class="rank-card"><span style="font-weight:600; color:#aaa;">#${u.rank} ${u.name}</span> <span style="font-family:'Orbitron'; color:var(--primary);">${u.score}</span></div>`;
-                });
-            });
+        function switchTheme(t) {
+            document.body.style.background = (t==='quiz') ? '#080a08' : (t==='prof' ? '#010400' : '#051405');
+            document.getElementById('leaves').style.display = (t==='home') ? 'block' : 'none';
+            document.getElementById('tree-bg').style.display = (t==='prof') ? 'block' : 'none';
+            if(t==='quiz') document.querySelector('.dock-container').style.display='none';
+            else document.querySelector('.dock-container').style.display='flex';
         }
 
-        function loadRef() {
-            let link = `https://t.me/errorkid_05?start=${user.id}`; 
-            document.getElementById('my-link').innerText = link;
-            fetch(`/api/referral/stats?uid=${user.id}`).then(r=>r.json()).then(d=>{
-                document.getElementById('ref-count').innerText = d.count;
-                updateMilestone(2, d.count, d.claimed);
-                updateMilestone(5, d.count, d.claimed);
-                updateMilestone(10, d.count, d.claimed);
-            });
+        function tab(t, btn) {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById(t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen')).style.display='flex';
+            document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
+            if(btn) btn.classList.add('active-dock');
+            if(t==='lb') loadLb('daily');
         }
-        function updateMilestone(target, count, claimed) {
-            let el = document.getElementById(`ms-${target}`);
-            let txt = el.querySelector('.status-txt');
-            el.className = 'm-item'; 
-            if(claimed.includes(target)) { el.classList.add('m-claimed'); txt.innerText = "CLAIMED"; }
-            else if(count >= target) { el.classList.add('m-active'); txt.innerText = "TAP TO CLAIM"; }
-            else { txt.innerText = `${count}/${target}`; }
-        }
-        function claim(target) {
-            let el = document.getElementById(`ms-${target}`);
-            if(!el.classList.contains('m-active')) return;
-            fetch('/api/referral/claim', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({uid: user.id, milestone: target}) })
-            .then(r=>r.json()).then(d=>{ if(d.status === 'success') { tg.showAlert("Reward Sent! 🎁"); loadRef(); } else tg.showAlert(d.error); });
-        }
-        function copyLink() { navigator.clipboard.writeText(document.getElementById('my-link').innerText); tg.showAlert("Link Copied!"); }
 
-        function startEngine() { switchTheme('quiz'); document.querySelectorAll('.screen').forEach(s=>s.style.display='none'); document.getElementById('game-screen').style.display='flex'; document.querySelector('.dock-container').style.display='none'; curr=0; score=0; mistakes=[]; solvedMistakes=[]; wrongCount=0; startTime = new Date(); loadQ(); }
-        function loadQ() { if(curr>=questions.length) return finishQuiz(); let q = questions[curr]; document.getElementById('q-txt').innerText = q.q; let optsDiv = document.getElementById('opts'); optsDiv.innerHTML=''; q.opts.forEach((o, i)=>{ let d = document.createElement('div'); d.className='opt-btn'; d.innerText=o; d.onclick=(e)=>check(i, d, e); optsDiv.appendChild(d); }); timer = window.quizTimerStart || 30; updateTimer(); clearInterval(tInt); tInt = setInterval(updateTimer, 1000); }
-        function updateTimer() { document.getElementById('timer-box').innerText = timer + 's'; if(timer-- <= 0) check(-1, null, null); }
-        function check(i, btn, event) {
-            clearInterval(tInt); let q = questions[curr]; document.querySelectorAll('.opt-btn').forEach(d=>d.onclick=null);
-            if(i === q.ans) { if(btn) btn.classList.add('correct'); score += 5; if(settings.vib) tg.HapticFeedback.impactOccurred('light'); if(settings.sound) sfxClick.play(); if(mode==='mistake') solvedMistakes.push(q.q); if(event) showFloatText(event.clientX, event.clientY, "+4", "#4ade80"); }
-            else { if(btn) btn.classList.add('wrong'); document.querySelectorAll('.opt-btn')[q.ans].classList.add('correct'); score -= 1; wrongCount++; if(settings.vib) tg.HapticFeedback.notificationOccurred('error'); if(settings.sound) sfxErr.play(); if(mode!=='mistake') mistakes.push(q); if(event) showFloatText(event.clientX, event.clientY, "-1", "#ef4444"); }
-            document.getElementById('curr-score').innerText = score; setTimeout(()=>{ curr++; loadQ(); }, 1200); 
+        function nav(p) { path=p; 
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('folder-screen').style.display='flex';
+            renderFolder(); 
         }
-        function showFloatText(x, y, txt, color) { let el = document.createElement('div'); el.className = 'float-score'; el.innerText = txt; el.style.color = color; el.style.left = x + 'px'; el.style.top = y + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 800); }
-        function finishQuiz() { clearInterval(tInt); document.querySelector('.dock-container').style.display='flex'; endTime = new Date(); let duration = Math.round((endTime - startTime) / 1000); let total = curr + (timer < 0 ? 1 : 0); let correct = total - wrongCount; let acc = total > 0 ? Math.round((correct / total) * 100) : 0; switchTheme('home'); document.getElementById('game-screen').style.display='none'; document.getElementById('result-screen').style.display='flex'; document.getElementById('final-score').innerText = score > 0 ? "+" + score : score; document.getElementById('res-acc').innerText = acc + "%"; document.getElementById('res-wrong').innerText = wrongCount; selChaps = []; sync(score); }
-
-        function nav(p) { path=p; document.querySelectorAll('.screen').forEach(s=>s.style.display='none'); document.getElementById('folder-screen').style.display='flex'; renderFolder(); }
         function back() { if(path.length>1) { path.pop(); renderFolder(); } else tab('home'); }
         
         function renderFolder() {
-            let ref = fullData; path.forEach(k=> ref=ref[k]); let list = document.getElementById('folder-list'); list.innerHTML=''; if(!ref) return; let keys = Object.keys(ref); let isFile = Array.isArray(ref[keys[0]]);
+            let ref = fullData; path.forEach(k=> ref=ref[k]);
+            let list = document.getElementById('folder-list'); list.innerHTML='';
+            if(!ref) return;
+            let keys = Object.keys(ref);
+            let isFile = Array.isArray(ref[keys[0]]);
+
             if(isFile) {
+                // Multi Select Mode
                 document.getElementById('config-btn').style.display='block';
-                keys.forEach(k=>{ 
-                    let d = document.createElement('div'); d.className = 'opt-btn show-check'; 
-                    d.innerHTML = `<div style="width:20px;height:20px;border:2px solid #555;margin-right:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;" class="chk">${selChaps.includes(k)?'✓':''}</div> ${k}`; 
-                    if(selChaps.includes(k)) { d.style.borderColor='var(--primary)'; d.querySelector('.chk').style.background='var(--primary)'; d.querySelector('.chk').style.color='black'; } 
-                    d.onclick = function() { if(selChaps.includes(k)) selChaps=selChaps.filter(x=>x!=k); else selChaps.push(k); renderFolder(); }; 
-                    if(mode==='admin') addDelBtn(d, k); // RESTORED DELETE LOGIC
-                    list.appendChild(d); 
+                keys.forEach(k=>{
+                    let d = document.createElement('div'); d.className = 'opt-btn show-check';
+                    d.innerHTML = `<div class="check-circle">✓</div> ${k}`;
+                    if(selChaps.includes(k)) d.classList.add('selected-opt');
+                    
+                    d.onclick = function() {
+                        if(selChaps.includes(k)) {
+                            selChaps=selChaps.filter(x=>x!=k);
+                            this.classList.remove('selected-opt');
+                        } else {
+                            selChaps.push(k);
+                            this.classList.add('selected-opt');
+                        }
+                    };
+                    if(mode==='admin') addDelBtn(d, k);
+                    list.appendChild(d);
                 });
             } else {
                 document.getElementById('config-btn').style.display='none';
-                keys.forEach(k=>{ 
-                    let d = document.createElement('div'); d.className = 'glass-box'; d.style.display='flex'; d.style.alignItems='center';
-                    d.innerHTML = `<span style="font-size:1.5rem; margin-right:15px;">📁</span> <span style="font-weight:600;">${k}</span>`; 
-                    d.onclick = ()=> { path.push(k); renderFolder(); }; 
-                    if(mode==='admin') addDelBtn(d, k); // RESTORED DELETE LOGIC
-                    list.appendChild(d); 
+                keys.forEach(k=>{
+                    let d = document.createElement('div'); d.className = 'glass-box'; 
+                    d.style.display='flex'; d.style.alignItems='center'; d.style.cursor='pointer';
+                    d.innerHTML = `<span style="font-size:1.5rem; margin-right:15px;">📁</span> <span style="font-weight:600;">${k}</span>`;
+                    d.onclick = ()=> { path.push(k); renderFolder(); };
+                    if(mode==='admin') addDelBtn(d, k);
+                    list.appendChild(d);
                 });
             }
         }
 
-        // RESTORED DELETE BUTTON FUNCTION
         function addDelBtn(parent, targetName) {
             let del = document.createElement('span'); del.innerText = '🗑️'; del.style.marginLeft='auto'; del.style.cursor='pointer';
             del.onclick = (e) => { e.stopPropagation(); deleteItem(targetName); };
             parent.appendChild(del);
         }
 
-        // RESTORED DELETE API CALL
+        function showSetup() {
+            if(selChaps.length===0) return tg.showAlert("Select chapters!");
+            document.getElementById('folder-screen').style.display='none';
+            document.getElementById('setup-screen').style.display='flex';
+        }
+
+        function finalStart() {
+            let ref = fullData; path.forEach(k=> ref=ref[k]);
+            questions = []; 
+            // Collect questions from ALL selected chapters
+            selChaps.forEach(k=> { if(ref[k]) questions.push(...ref[k]); });
+            questions.sort(()=>Math.random()-0.5); 
+            
+            let lInput = parseInt(document.getElementById('q-limit').value);
+            let tInput = parseInt(document.getElementById('q-timer').value);
+            let limit = (lInput > 0 && lInput <= 500) ? lInput : 20;
+            let tm = (tInput > 0 && tInput <= 120) ? tInput : 30;
+
+            questions = questions.slice(0, limit);
+            if(questions.length===0) return tg.showAlert("No Questions!");
+            
+            mode='normal'; window.quizTimerStart = tm; startEngine();
+        }
+
+        function startMistakes() {
+            questions = window.mistakeList;
+            if(!questions || questions.length==0) return;
+            mode='mistake'; window.quizTimerStart = 30; startEngine();
+        }
+
+        function startEngine() {
+            switchTheme('quiz');
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('game-screen').style.display='flex';
+            curr=0; score=0; mistakes=[]; solvedMistakes=[]; wrongCount=0;
+            startTime = new Date();
+            loadQ();
+        }
+
+        function loadQ() {
+            if(curr>=questions.length) return finishQuiz();
+            let q = questions[curr];
+            document.getElementById('q-txt').innerText = q.q;
+            let optsDiv = document.getElementById('opts'); optsDiv.innerHTML='';
+            q.opts.forEach((o, i)=>{
+                let d = document.createElement('div'); d.className='opt-btn'; d.innerText=o;
+                d.onclick = (e) => check(i, d, e);
+        
+                optsDiv.appendChild(d);
+            });
+            timer = window.quizTimerStart; updateTimer();
+            clearInterval(tInt); tInt = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            let box = document.getElementById('timer-box'); box.innerText = timer + 's';
+            if(timer-- <= 0) check(-1, null);
+        }
+
+function check(i, btn, event) {
+    clearInterval(tInt);
+    let q = questions[curr];
+    document.querySelectorAll('.opt-btn').forEach(d=>d.onclick=null);
+    
+    if(settings.sound) sfxClick.play();
+
+    // Click coordinates nikalo (Agar time khatam hua to screen ke beech me dikhao)
+    let x = event ? event.clientX : window.innerWidth / 2;
+    let y = event ? event.clientY : window.innerHeight / 2;
+
+    if(i === q.ans) {
+        if(btn) btn.classList.add('correct');
+        score += 4; // Aapne +4 bola tha
+        showFloatingText(x, y, "+4", "win"); // ✨ EFFECT
+        
+        if(settings.vib) tg.HapticFeedback.impactOccurred('light');
+        if(mode==='mistake') solvedMistakes.push(q.q);
+    } else {
+        if(btn) btn.classList.add('wrong');
+        document.querySelectorAll('.opt-btn')[q.ans].classList.add('correct');
+        score -= 1; // -1 effect
+        wrongCount++;
+        showFloatingText(x, y, "-1", "loss"); // ✨ EFFECT
+        
+        if(settings.sound) sfxErr.play();
+        if(settings.vib) tg.HapticFeedback.notificationOccurred('error');
+        if(mode!=='mistake') mistakes.push(q);
+    }
+    document.getElementById('curr-score').innerText = score;
+    setTimeout(()=>{ curr++; loadQ(); }, 1000); 
+}
+
+
+        
+        function finishQuiz() {
+            clearInterval(tInt);
+            endTime = new Date();
+            let duration = Math.round((endTime - startTime) / 1000);
+            let total = curr + (timer < 0 ? 1 : 0);
+            let correct = total - wrongCount;
+            let acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+            switchTheme('home');
+            document.getElementById('game-screen').style.display='none';
+            document.getElementById('result-screen').style.display='flex';
+            document.getElementById('final-score').innerText = score > 0 ? "+" + score : score;
+            document.getElementById('res-acc').innerText = acc + "%";
+            document.getElementById('res-wrong').innerText = wrongCount;
+            document.getElementById('res-time').innerText = duration + "s";
+            document.getElementById('res-total').innerText = total;
+            selChaps = []; 
+            sync(score);
+        }
+
+        function loadLb(filter, btn) {
+            if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
+            fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
+                let list = document.getElementById('lb-list'); list.innerHTML='';
+                d.top.forEach(u => {
+                    let rankClass = u.rank === 1 ? 'rank-1' : (u.rank === 2 ? 'rank-2' : (u.rank === 3 ? 'rank-3' : ''));
+                    let color = u.rank <= 3 ? '#fff' : '#aaa';
+                    let div = document.createElement('div'); div.className = `rank-card ${rankClass}`;
+                    div.style.color = color;
+                    div.innerHTML = `<span style="font-weight:600">#${u.rank} ${u.name}</span> <span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function saveSet() { 
+            settings.sound = document.getElementById('tog-sound').checked; 
+            settings.vib = document.getElementById('tog-vib').checked; 
+            localStorage.setItem('jjk_set', JSON.stringify(settings)); 
+        }
         function deleteItem(target) {
             if(!confirm(`Delete "${target}"?`)) return;
             fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
         }
-
-        function showSetup() { if(selChaps.length===0) return tg.showAlert("Select chapters!"); document.getElementById('folder-screen').style.display='none'; document.getElementById('setup-screen').style.display='flex'; }
-        function finalStart() { let ref = fullData; path.forEach(k=> ref=ref[k]); questions = []; selChaps.forEach(k=> { if(ref[k]) questions.push(...ref[k]); }); questions.sort(()=>Math.random()-0.5); let limit = parseInt(document.getElementById('q-limit').value) || 20; questions = questions.slice(0, limit); window.quizTimerStart = parseInt(document.getElementById('q-timer').value) || 30; startEngine(); }
-        function saveSet() { settings.sound = document.getElementById('tog-sound').checked; settings.vib = document.getElementById('tog-vib').checked; localStorage.setItem('jjk_set', JSON.stringify(settings)); }
-        function startMistakes() { questions = window.mistakeList; if(!questions || questions.length==0) return; mode='mistake'; window.quizTimerStart = 30; startEngine(); }
-
     </script>
 </body>
 </html>
