@@ -6,8 +6,7 @@ from pymongo import MongoClient
 import threading, os, time
 import certifi 
 import json
-from datetime import datetime, timedelta, timezone
-
+from datetime import datetime
 
 # ==========================================
 # ⚙️ CONFIGURATION
@@ -350,52 +349,6 @@ def delete_item():
         elif len(path) == 2: questions_col.delete_one({"source": path[0], "type": path[1], "chapter": target})
         return jsonify({"status": "deleted"})
     except: return jsonify({"error": "DB Error"})
-
-# ==========================================
-# 🎯 DAILY GOAL & ACTIVITY TRACKER
-# ==========================================
-from datetime import datetime, timedelta, timezone
-
-
-def get_today_date():
-    # India Timezone (IST) taaki date sahi rahe
-    IST = timezone(timedelta(hours=5, minutes=30))
-    
-    return datetime.now(IST).strftime('%Y-%m-%d')
-
-@app.route('/api/update_activity', methods=['POST'])
-def update_activity():
-    data = request.json
-    uid = str(data.get('uid'))
-    count = int(data.get('count', 1)) 
-    
-    today = get_today_date()
-    
-    # Database mein aaj ki date ka count badhao
-    users_col.update_one(
-        {"_id": uid},
-        {
-            "$inc": { f"activity_log.{today}": count }
-        }
-    )
-    return jsonify({"status": "updated"})
-
-@app.route('/api/get_daily_goal')
-def get_daily_goal():
-    uid = request.args.get('uid')
-    if not uid: return jsonify({"progress": 0})
-    
-    user = users_col.find_one({"_id": uid})
-    if not user: return jsonify({"progress": 0})
-    
-    today = get_today_date()
-    activity_log = user.get('activity_log', {})
-    
-    # Aaj ka count nikalo
-    today_count = activity_log.get(today, 0)
-    
-    return jsonify({"progress": today_count, "target": 50})
-
 
 
 if __name__ == "__main__":
