@@ -1,4 +1,4 @@
-Import telebot
+import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
