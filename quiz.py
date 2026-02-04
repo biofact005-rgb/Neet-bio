@@ -18,6 +18,7 @@ ADMIN_ID = 8557964907
 # Channel Details for Verification
 CHANNEL_USERNAME = "@errorkid_05" 
 CHANNEL_LINK = "https://t.me/errorkid_05"
+CHANNEL_LINK1 = "https://t.me/+wttsW0EvoRZhMzNl"
 
 MONGO_URI = os.getenv("MONGO_URI")
 
@@ -116,7 +117,7 @@ def start(m):
     app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🧬 OPEN NEET PRO", web_app=WebAppInfo(url=app_url)))
-    markup.add(InlineKeyboardButton("📢 Channel", url=CHANNEL_LINK))
+    markup.add(InlineKeyboardButton("📢 Channel", url=CHANNEL_LINK1))
     bot.send_message(m.chat.id, f"Welcome Future Doctor, {m.from_user.first_name}! 🩺\n\n✅ **Verification Successful**", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
