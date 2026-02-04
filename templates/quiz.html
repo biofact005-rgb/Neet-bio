@@ -350,7 +350,7 @@
                 <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0;">Doctor</div>
                 <div style="font-size:0.8rem; color:#aaa;">Level XP: <span id="xp-nums" style="color:var(--primary);">0/100</span></div>
             </div>
-    
+        </div>
 
         <div style="margin-top:20px;">
             <div class="allen-btn" onclick="transitionTo(['Allen'])">
@@ -486,16 +486,6 @@
         document.getElementById('tog-vib').checked = settings.vib;
         
         sync();
-        document.getElementById('tog-sound').checked = settings.sound;
-        document.getElementById('tog-vib').checked = settings.vib;
-        
-        sync();
-        
-
-// Floating Text Logic starts below...
-function showFloatingText(x, y, text, type) {
-
-            
 // Floating Text Logic
 function showFloatingText(x, y, text, type) {
     let el = document.createElement('div');
@@ -697,8 +687,6 @@ function showFloatingText(x, y, text, type) {
     let x = event ? event.clientX : window.innerWidth / 2;
     let y = event ? event.clientY : window.innerHeight / 2;
 
-            
-            
     if(i === q.ans) {
         // --- SAHI JAWAB ---
         if(btn) btn.classList.add('correct');
@@ -801,10 +789,6 @@ function showFloatingText(x, y, text, type) {
             if(!confirm(`Delete "${target}"?`)) return;
             fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
         }
-
-
-
-        
     </script>
 </body>
 </html>
