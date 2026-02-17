@@ -369,6 +369,55 @@
             </div>
         </div>
 
+       <div id="battle-screen" class="screen">
+    <div id="battle-timer-bar" style="width:100%; height:5px; background:var(--gold); margin-bottom:10px; transition: 0.5s;"></div>
+    
+    <div class="vs-bar">
+        <div class="p-card" style="border:1px solid var(--primary);">
+            <div id="p1-name-tag">You</div>
+            <div id="p1-score" class="p-score-live">0</div>
+        </div>
+        <div style="font-size:1.5rem; padding-top:15px;">VS</div>
+        <div class="p-card" style="border:1px solid var(--danger);">
+            <div id="p2-name-tag">Opponent</div>
+            <div id="p2-score" class="p-score-live">0</div>
+        </div>
+    </div>
+
+    <div id="battle-q-area">
+        <div class="q-container"><div id="battle-q-txt">Loading Battle...</div></div>
+        <div id="battle-opts"></div>
+    </div>
+
+    <div id="waiting-msg" style="display:none; text-align:center; margin-top:50px;" class="waiting-anim">
+        <div style="font-size:2rem;">⏳</div>
+        <div>Waiting for opponent's answer...</div>
+    </div>
+</div>
+
+<div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
+    <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
+    
+    <div class="glass-box" style="padding:25px; margin-bottom:30px;">
+        <div style="display:flex; justify-content:space-around; align-items:center;">
+            <div>
+                <div style="color:#aaa; font-size:0.8rem;">YOUR XP</div>
+                <div id="final-my-score" style="font-size:2.5rem; font-weight:bold; color:var(--primary);">0</div>
+            </div>
+            <div style="font-size:1.5rem; color:#444;">VS</div>
+            <div>
+                <div style="color:#aaa; font-size:0.8rem;">OPPONENT</div>
+                <div id="final-opp-score" style="font-size:2.5rem; font-weight:bold; color:var(--danger);">0</div>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="openBattleLobby()" style="width:100%; padding:18px; background:var(--primary); color:black; border:none; border-radius:15px; font-weight:800; font-family:'Orbitron'; margin-bottom:15px;">REMATCH ⚔️</button>
+    <button onclick="goHome()" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:15px; color:#aaa; font-weight:600;">EXIT ARENA</button>
+</div>
+
+
+        
         <div class="allen-btn" onclick="openBattleLobby()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
     <div class="allen-text" style="color:var(--gold);">1 v 1 BATTLE</div>
     <div style="font-size:0.8rem; color:#888;">CHALLENGE FRIEND</div>
@@ -919,62 +968,124 @@ socket.on('game_started', (data) => {
     loadBattleQ();
 });
 
+
+let bTimer;
+let timeLeft = 30;
+
+function updateTimerBar() {
+    let width = (timeLeft / 30) * 100;
+    document.getElementById('battle-timer-bar').style.width = width + "%";
+}
+
 function loadBattleQ() {
-    if(window.bCurr >= window.battleQs.length) return endBattle();
+    if(window.bCurr >= window.battleQs.length) return showBattleResult();
+    
+    // Reset Timer
+    timeLeft = 30;
+    updateTimerBar();
+    
+    // UI Reset
+    document.getElementById('waiting-msg').style.display = 'none';
+    document.getElementById('battle-q-area').style.display = 'block';
     
     let q = window.battleQs[window.bCurr];
-    document.getElementById('battle-q-txt').innerText = q.q;
+    document.getElementById('battle-q-txt').innerText = `Q${window.bCurr+1}: ${q.q}`;
     let opts = document.getElementById('battle-opts'); opts.innerHTML = '';
     
     q.opts.forEach((o, i) => {
         let btn = document.createElement('div'); btn.className = 'opt-btn'; btn.innerText = o;
-        btn.onclick = () => submitBattleAns(i, q.ans, btn);
+        btn.onclick = (e) => submitBattleAns(i, q.ans, btn, e);
         opts.appendChild(btn);
     });
+
+    // Start 30s Countdown
+    clearInterval(bTimer);
+    bTimer = setInterval(() => {
+        timeLeft--;
+        updateTimerBar();
+        if(timeLeft <= 0) {
+            clearInterval(bTimer);
+            submitBattleAns(-1, q.ans, null); // Time up auto-submit
+        }
+    }, 1000);
 }
 
-  function submitBattleAns(idx, correctIdx, btn) {
-    // 1. Saare buttons ko select karo
+function submitBattleAns(idx, correctIdx, btn, e) {
+    clearInterval(bTimer); // Timer roko
     let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
+    allBtns.forEach(b => b.onclick = null); // Disable buttons
     
-    // 2. Sabko disable kar do (taaki user dubara click na kare)
-    allBtns.forEach(b => b.onclick = null);
-    
-    // Click coordinates (Animation ke liye)
-    let x = event ? event.clientX : window.innerWidth / 2;
-    let y = event ? event.clientY : window.innerHeight / 2;
+    let x = e ? e.clientX : window.innerWidth / 2;
+    let y = e ? e.clientY : window.innerHeight / 2;
 
-    if(idx === correctIdx) {
-        // --- SAHI JAWAB ---
-        btn.classList.add('correct'); // Green
-        battleScore += 4;
-        showFloatingText(x, y, "+4", "win");
-    } else {
-        // --- GALAT JAWAB ---
-        btn.classList.add('wrong'); // Red
-        
-        // ✨ UPDATE: Sahi wale ko dhundh kar GREEN kar do
-        if(allBtns[correctIdx]) {
-            allBtns[correctIdx].classList.add('correct');
+    if(idx !== -1) {
+        if(idx === correctIdx) {
+            if(btn) btn.classList.add('correct');
+            battleScore += 4;
+            showFloatingText(x, y, "+4", "win");
+        } else {
+            if(btn) btn.classList.add('wrong');
+            if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
+            battleScore -= 1;
+            showFloatingText(x, y, "-1", "loss");
         }
-
-        battleScore -= 1;
-        showFloatingText(x, y, "-1", "loss");
     }
-    
-    // Score Update UI
+
+    // My score local update
     document.getElementById('p1-score').innerText = battleScore;
     
-    // Server ko batao
+    // Server ko score bhejo
     socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
     
-    // 3. Thoda wait karo (1.5s) taaki user answer dekh sake
+    // Wait for opponent
     setTimeout(() => {
-        window.bCurr++;
-        loadBattleQ();
-    }, 1500);
+        document.getElementById('battle-q-area').style.display = 'none';
+        document.getElementById('waiting-msg').style.display = 'block';
+    }, 1000);
 }
 
+// Dono ke answer aane par server ye event bhejega
+socket.on('next_question', () => {
+    window.bCurr++;
+    loadBattleQ();
+});
+
+// Live score updates
+socket.on('opponent_update', (data) => {
+    // IsHost logic se check karein ki kaun kiska score hai
+    let myScore = isHost ? data.p1_score : data.p2_score;
+    let oppScore = isHost ? data.p2_score : data.p1_score;
+    
+    document.getElementById('p1-score').innerText = myScore;
+    document.getElementById('p2-score').innerText = oppScore;
+});
+
+function showBattleResult() {
+    let myFinal = parseInt(document.getElementById('p1-score').innerText);
+    let oppFinal = parseInt(document.getElementById('p2-score').innerText);
+    
+    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+    document.getElementById('battle-result-screen').style.display='flex';
+    
+    document.getElementById('final-my-score').innerText = myFinal;
+    document.getElementById('final-opp-score').innerText = oppFinal;
+    
+    let title = document.getElementById('battle-status-title');
+    if(myFinal > oppFinal) { 
+        title.innerText = "🏆 VICTORY!"; 
+        title.style.color = "var(--gold)";
+        if(settings.vib) tg.HapticFeedback.notificationOccurred('success');
+    } else if(myFinal < oppFinal) { 
+        title.innerText = "💀 DEFEAT!"; 
+        title.style.color = "var(--danger)";
+        if(settings.vib) tg.HapticFeedback.notificationOccurred('error');
+    } else { 
+        title.innerText = "🤝 DRAW!"; 
+        title.style.color = "white"; 
+    }
+}
+
+  
 
 function endBattle() {
     tg.showAlert(`Game Over! Final Score: ${battleScore}`);
