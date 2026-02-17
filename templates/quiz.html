@@ -729,8 +729,10 @@ function showFloatingText(x, y, text, type) {
     clearInterval(tInt); // Timer roko
     let q = questions[curr];
     
-    // Buttons disable karo
+    // 1. Saare buttons ko ek variable me lo (taaki sahi button dhundh sakein)
     let allOptions = document.querySelectorAll('.opt-btn');
+    
+    // 2. Buttons disable karo
     allOptions.forEach(d => d.onclick = null);
     
     if(settings.sound) sfxClick.play();
@@ -740,7 +742,7 @@ function showFloatingText(x, y, text, type) {
     let y = event ? event.clientY : window.innerHeight / 2;
 
     if(i === q.ans) {
-        // --- SAHI JAWAB ---
+        // --- SAHI JAWAB (User ne sahi dabaya) ---
         if(btn) btn.classList.add('correct');
         score += 4;
         showFloatingText(x, y, "+4", "win");
@@ -748,10 +750,10 @@ function showFloatingText(x, y, text, type) {
         if(settings.vib) tg.HapticFeedback.impactOccurred('light');
         if(mode==='mistake') solvedMistakes.push(q.q);
     } else {
-        // --- GALAT JAWAB ---
-        if(btn) btn.classList.add('wrong'); // Jo dabaya use Red karo
+        // --- GALAT JAWAB (User ne galat dabaya) ---
+        if(btn) btn.classList.add('wrong'); // Jo dabaya wo RED ho jayega
         
-        // ✨ FIX: Sahi wale ko Green karo (Safety Check ke saath)
+        // ✨ MAGIC UPDATE: Jo Sahi button hai, use dhundh kar GREEN kar do
         if(allOptions[q.ans]) {
             allOptions[q.ans].classList.add('correct');
         }
@@ -767,7 +769,7 @@ function showFloatingText(x, y, text, type) {
 
     document.getElementById('curr-score').innerText = score;
     
-    // 1.5 Second ka wait taaki user sahi answer dekh sake
+    // 3. Thoda time badhaya (1.5s) taaki user sahi answer dekh sake
     setTimeout(()=>{ curr++; loadQ(); }, 1500); 
 }
 
@@ -931,37 +933,48 @@ function loadBattleQ() {
     });
 }
 
-function submitBattleAns(idx, correctIdx, btn) {
-    // Disable clicks
-    document.querySelectorAll('#battle-opts .opt-btn').forEach(b=>b.onclick=null);
+  function submitBattleAns(idx, correctIdx, btn) {
+    // 1. Saare buttons ko select karo
+    let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
     
+    // 2. Sabko disable kar do (taaki user dubara click na kare)
+    allBtns.forEach(b => b.onclick = null);
+    
+    // Click coordinates (Animation ke liye)
+    let x = event ? event.clientX : window.innerWidth / 2;
+    let y = event ? event.clientY : window.innerHeight / 2;
+
     if(idx === correctIdx) {
-        btn.classList.add('correct');
+        // --- SAHI JAWAB ---
+        btn.classList.add('correct'); // Green
         battleScore += 4;
+        showFloatingText(x, y, "+4", "win");
     } else {
-        btn.classList.add('wrong');
+        // --- GALAT JAWAB ---
+        btn.classList.add('wrong'); // Red
+        
+        // ✨ UPDATE: Sahi wale ko dhundh kar GREEN kar do
+        if(allBtns[correctIdx]) {
+            allBtns[correctIdx].classList.add('correct');
+        }
+
         battleScore -= 1;
+        showFloatingText(x, y, "-1", "loss");
     }
     
-    // Update My UI
+    // Score Update UI
     document.getElementById('p1-score').innerText = battleScore;
     
-    // Send to Server
+    // Server ko batao
     socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
     
+    // 3. Thoda wait karo (1.5s) taaki user answer dekh sake
     setTimeout(() => {
         window.bCurr++;
         loadBattleQ();
-    }, 1000);
+    }, 1500);
 }
 
-socket.on('opponent_update', (data) => {
-    if(data.uid != user.id) {
-        // Update Enemy Score UI
-        document.getElementById('p2-score').innerText = data.score;
-        tg.HapticFeedback.impactOccurred('light'); // Vibration when enemy moves
-    }
-});
 
 function endBattle() {
     tg.showAlert(`Game Over! Final Score: ${battleScore}`);
