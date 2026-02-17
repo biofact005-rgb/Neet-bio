@@ -398,18 +398,36 @@ def handle_join_room(data):
     else:
         emit('error', {"msg": "Room Full or Invalid"}, room=request.sid)
 
-@socketio.on('start_game')
+    @socketio.on('start_game')
 def handle_start_game(data):
     room_id = data['room_id']
     if room_id in ROOMS:
-        # Fetch 5 Random Questions from DB (Biology Default)
-        # Yahan aap logic change kar sakte hain
-        all_q = list(questions_col.find({"source": "Allen"}, {"_id": 0}).limit(50))
-        if all_q:
-            game_qs = random.sample(all_q, min(5, len(all_q)))
+        # 1. Sare Chapters nikalo (Source kuch bhi ho)
+        # Agar aap chahte hain sirf Allen ke aaye to .find({}) ke andar {"source": "Allen"} likh dein
+        cursor = questions_col.find({}) 
+        
+        all_questions = []
+        
+        # 2. Har chapter ke andar se 'data' (questions) nikalo aur ek list me dalo
+        for doc in cursor:
+            if 'data' in doc and isinstance(doc['data'], list):
+                all_questions.extend(doc['data']) 
+        
+        # 3. Ab inme se 5 random sawal chuno
+        if all_questions:
+            # Agar 5 se kam sawal hain to jitne hain utne hi lo
+            count = min(5, len(all_questions))
+            game_qs = random.sample(all_questions, count)
+            
             ROOMS[room_id]["questions"] = game_qs
             ROOMS[room_id]["status"] = "playing"
+            
+            # 4. Client ko sawal bhejo
             emit('game_started', {"questions": game_qs}, room=room_id)
+        else:
+            # Agar DB khali hai
+            emit('error', {"msg": "No questions found in Database!"}, room=room_id)
+
 
 @socketio.on('submit_answer')
 def handle_answer(data):
