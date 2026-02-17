@@ -1,6 +1,8 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, emit, join_room, leave_room
+import random, string
 from flask_cors import CORS
 from pymongo import MongoClient
 import threading, os, time
@@ -25,6 +27,11 @@ MONGO_URI = os.getenv("MONGO_URI")
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 CORS(app)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Live Match Memory (RAM)
+ROOMS = {} 
 
 # ==========================================
 # 🗄️ DATABASE CONNECTION
@@ -352,7 +359,85 @@ def delete_item():
     except: return jsonify({"error": "DB Error"})
 
 
+    # ==========================================
+# ⚔️ 1v1 BATTLE LOGIC (SocketIO)
+# ==========================================
+def generate_room_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+
+@socketio.on('create_room')
+def handle_create_room(data):
+    room_id = generate_room_code()
+    uid = data['uid']
+    name = data['name']
+    
+    ROOMS[room_id] = {
+        "p1": {"id": uid, "name": name, "score": 0, "sid": request.sid},
+        "p2": None,
+        "status": "waiting",
+        "questions": []
+    }
+    join_room(room_id)
+    emit('room_created', {"room_id": room_id}, room=request.sid)
+
+@socketio.on('join_room_request')
+def handle_join_room(data):
+    room_id = data['room_id']
+    uid = data['uid']
+    name = data['name']
+    
+    if room_id in ROOMS and ROOMS[room_id]["p2"] is None:
+        ROOMS[room_id]["p2"] = {"id": uid, "name": name, "score": 0, "sid": request.sid}
+        ROOMS[room_id]["status"] = "ready"
+        join_room(room_id)
+        # Notify both players
+        emit('player_joined', {
+            "p1": ROOMS[room_id]["p1"]["name"],
+            "p2": name
+        }, room=room_id)
+    else:
+        emit('error', {"msg": "Room Full or Invalid"}, room=request.sid)
+
+@socketio.on('start_game')
+def handle_start_game(data):
+    room_id = data['room_id']
+    if room_id in ROOMS:
+        # Fetch 5 Random Questions from DB (Biology Default)
+        # Yahan aap logic change kar sakte hain
+        all_q = list(questions_col.find({"source": "Allen"}, {"_id": 0}).limit(50))
+        if all_q:
+            game_qs = random.sample(all_q, min(5, len(all_q)))
+            ROOMS[room_id]["questions"] = game_qs
+            ROOMS[room_id]["status"] = "playing"
+            emit('game_started', {"questions": game_qs}, room=room_id)
+
+@socketio.on('submit_answer')
+def handle_answer(data):
+    room_id = data['room_id']
+    uid = data['uid']
+    score = data['score'] # Current total score
+    
+    if room_id in ROOMS:
+        room = ROOMS[room_id]
+        # Update Score
+        if room["p1"]["id"] == uid: room["p1"]["score"] = score
+        elif room["p2"] and room["p2"]["id"] == uid: room["p2"]["score"] = score
+        
+        # Notify Opponent
+        emit('opponent_update', {"uid": uid, "score": score}, room=room_id)
+
+@socketio.on('game_over')
+def handle_end(data):
+    room_id = data['room_id']
+    if room_id in ROOMS:
+        # Save results to DB here if needed
+        pass
+        # Clean up room after delay could be added here
+
 if __name__ == "__main__":
-    t = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000))))
+    # Threading hata kar SocketIO run karein
+    t = threading.Thread(target=lambda: socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), allow_unsafe_werkzeug=True))
     t.start()
     bot.infinity_polling()
+
+       
