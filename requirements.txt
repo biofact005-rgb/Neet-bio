@@ -1,7 +1,9 @@
 pyTelegramBotAPI
 flask
-flask_cors
+flask-cors
 pymongo
-dnspython
 certifi
-
+dnspython
+flask-socketio
+eventlet
+gunicorn
