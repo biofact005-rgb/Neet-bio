@@ -429,20 +429,32 @@ def handle_start_game(data):
 
 
 
+
+
+
 @socketio.on('submit_answer')
 def handle_answer(data):
     room_id = data['room_id']
     uid = data['uid']
-    score = data['score'] # Current total score
+    score = data['score']
     
     if room_id in ROOMS:
         room = ROOMS[room_id]
-        # Update Score
         if room["p1"]["id"] == uid: room["p1"]["score"] = score
         elif room["p2"] and room["p2"]["id"] == uid: room["p2"]["score"] = score
         
-        # Notify Opponent
-        emit('opponent_update', {"uid": uid, "score": score}, room=room_id)
+        # Live Score update (Sabko bhejo)
+        emit('opponent_update', {"p1_score": room["p1"]["score"], "p2_score": room["p2"]["score"] if room["p2"] else 0}, room=room_id)
+
+        # Check agar dono ne answer de diya hai
+        room["answered_count"] = room.get("answered_count", 0) + 1
+        if room["answered_count"] >= 2:
+            room["answered_count"] = 0
+            emit('next_question', room=room_id)
+
+
+
+      
 
 @socketio.on('game_over')
 def handle_end(data):
@@ -451,6 +463,9 @@ def handle_end(data):
         # Save results to DB here if needed
         pass
         # Clean up room after delay could be added here
+
+
+
 
 if __name__ == "__main__":
     # Threading hata kar SocketIO run karein
