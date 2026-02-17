@@ -398,8 +398,6 @@ def handle_join_room(data):
     else:
         emit('error', {"msg": "Room Full or Invalid"}, room=request.sid)
 
-    @found in Database!"}, room=room_id)
-
 
 @socketio.on('start_game')
 def handle_start_game(data):
@@ -426,7 +424,9 @@ def handle_start_game(data):
             # 4. Client ko sawal bhejo
             emit('game_started', {"questions": game_qs}, room=room_id)
         else:
+            # Ye wali line dhyan se paste karein
             emit('error', {"msg": "No questions found in Database!"}, room=room_id)
+
 
 
 @socketio.on('submit_answer')
