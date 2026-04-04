@@ -106,28 +106,70 @@ def parse_txt_file(content):
 # ==========================================
 # 🤖 BOT HANDLERS
 # ==========================================
+
 @bot.message_handler(commands=['start'])
 def start(m):
     uid = m.from_user.id
     
     # 1. Check Membership
     if not check_membership(uid):
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("📢 𝙅𝙤𝙞𝙣 𝘾𝙝𝙖𝙣𝙣𝙚𝙡 (𝙈𝙪𝙨𝙩) 📢", url=CHANNEL_LINK))
+        markup.add(InlineKeyboardButton("🔄 𝘾𝙝𝙚𝙘𝙠 𝙎𝙩𝙖𝙩𝙪𝙨 🔄", callback_data="check_sub"))
+        
         bot.send_message(
             m.chat.id, 
-            "⚠️ **Access Denied!**\n\nYou must join our official channel to use this bot.\nJoin and click 'Check Status'.", 
-            reply_markup=get_join_markup(),
+            "⚠️ **𝗔𝗰𝗰𝗲𝘀𝘀 𝗗𝗲𝗻𝗶𝗲𝗱!**\n\nYou must join our official channel to use this bot.\nJoin and click 'Check Status'.", 
+            reply_markup=markup,
             parse_mode="Markdown"
         )
         return
 
-    # 2. If Joined, Show App
+    # 2. If Joined, Show Fancy App Menu
+    send_welcome_menu(m.chat.id, m.from_user.first_name, m.from_user.id)
+
+def send_welcome_menu(chat_id, first_name, user_id):
     app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("🧬 OPEN NEET PRO", web_app=WebAppInfo(url=app_url)))
-    markup.add(InlineKeyboardButton("📢 Channel", url=CHANNEL_LINK1))
-    bot.send_message(m.chat.id, f"Welcome Future Doctor, {m.from_user.first_name}! 🩺\n\n✅ **Verification Successful**", reply_markup=markup)
+    
+    # Colourful Buttons
+    markup.add(InlineKeyboardButton("🧬 𝗢𝗣𝗘𝗡 𝗡𝗘𝗘𝗧 𝗣𝗥𝗢 🧬", web_app=WebAppInfo(url=app_url)))
+    markup.row(
+        InlineKeyboardButton("📢 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗖𝗵𝗮𝗻𝗻𝗲𝗹", url=CHANNEL_LINK1),
+        InlineKeyboardButton("👨‍⚕️ 𝗛𝗲𝗹𝗽 & 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/your_support")
+    )
+    markup.add(InlineKeyboardButton("🏆 𝗟𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱 🏆", callback_data="show_leaderboard"))
+
+    # Yahan apni pasand ki image ka direct link daal dena (jaise Gojo wali image)
+    image_url = "https://telegra.ph/file/09e9929cb79e7a83d739f.jpg" # Example placeholder
+    
+    # Fancy Text formatting
+    caption = f"🏆 **𝗡𝗘𝗘𝗧 𝗣𝗥𝗢 𝗧𝗘𝗥𝗠𝗜𝗡𝗔𝗟** 🏆\n\n" \
+              f"👤 **User:** {first_name}\n" \
+              f"🆔 **ID:** `{user_id}`\n" \
+              f"👑 **Status:** Premium Access\n\n" \
+              f"💬 **SYSTEM READY.**\n" \
+              f"Click below to start your mock test!"
+
+    try:
+        # Photo send karega
+        bot.send_photo(chat_id, photo=image_url, caption=caption, reply_markup=markup, parse_mode="Markdown")
+    except Exception as e:
+        # Agar image load nahi hui toh sirf text bhej dega
+        bot.send_message(chat_id, caption, reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
+def callback_check(call):
+    uid = call.from_user.id
+    if check_membership(uid):
+        bot.answer_callback_query(call.id, "✅ Verified!")
+        # Purana access denied message delete karke naya image wala bhej dega
+        bot.delete_message(call.message.chat.id, call.message.message_id) 
+        send_welcome_menu(call.message.chat.id, call.from_user.first_name, uid)
+    else:
+        bot.answer_callback_query(call.id, "❌ Not Joined Yet!", show_alert=True)
+
+
 
 # ==========================================
 # 📢 BROADCAST SYSTEM
