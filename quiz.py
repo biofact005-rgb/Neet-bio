@@ -128,48 +128,63 @@ def start(m):
     # 2. If Joined, Show Fancy App Menu
     send_welcome_menu(m.chat.id, m.from_user.first_name, m.from_user.id)
 
+
 def send_welcome_menu(chat_id, first_name, user_id):
     app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
     markup = InlineKeyboardMarkup()
     
-    # Colourful Buttons
+    # Colorful Buttons
     markup.add(InlineKeyboardButton("🧬 𝗢𝗣𝗘𝗡 𝗡𝗘𝗘𝗧 𝗣𝗥𝗢 🧬", web_app=WebAppInfo(url=app_url)))
     markup.row(
         InlineKeyboardButton("📢 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗖𝗵𝗮𝗻𝗻𝗲𝗹", url=CHANNEL_LINK1),
-        InlineKeyboardButton("👨‍⚕️ 𝗛𝗲𝗹𝗽 & 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/your_support")
+        InlineKeyboardButton("👨‍⚕️ 𝗛𝗲𝗹𝗽 𝗖𝗲𝗻𝘁𝗲𝗿", url="https://t.me/errorkid_05")
     )
-    markup.add(InlineKeyboardButton("🏆 𝗟𝗲𝗮𝗱𝗲𝗿𝗯𝗼𝗮𝗿𝗱 🏆", callback_data="show_leaderboard"))
 
-    # Yahan apni pasand ki image ka direct link daal dena (jaise Gojo wali image)
-    image_url = "https://telegra.ph/file/09e9929cb79e7a83d739f.jpg" # Example placeholder
+    # Yahan Gojo ya apni image ka direct link dalo
+    image_url = "https://telegra.ph/file/09e9929cb79e7a83d739f.jpg" 
     
-    # Fancy Text formatting
-    caption = f"🏆 **𝗡𝗘𝗘𝗧 𝗣𝗥𝗢 𝗧𝗘𝗥𝗠𝗜𝗡𝗔𝗟** 🏆\n\n" \
-              f"👤 **User:** {first_name}\n" \
-              f"🆔 **ID:** `{user_id}`\n" \
-              f"👑 **Status:** Premium Access\n\n" \
-              f"💬 **SYSTEM READY.**\n" \
-              f"Click below to start your mock test!"
+    # Blockquote ke liye HTML tags use kiye hain
+    caption = f"🏆 <b>𝗘𝗿𝗿𝗼𝗿 𝗢𝗦𝗜𝗡𝗧 𝗧𝗲𝗿𝗺𝗶𝗻𝗮𝗹</b> 🏆\n\n" \
+              f"👤 <b>User:</b> {first_name}\n" \
+              f"🆔 <b>ID:</b> <code>{user_id}</code>\n" \
+              f"👑 <b>Status:</b> Premium Access\n\n" \
+              f"<blockquote>💬 <b>SYSTEM READY.</b>\n" \
+              f"Select a module below, or simply open the app to start your mock test.</blockquote>"
 
     try:
-        # Photo send karega
-        bot.send_photo(chat_id, photo=image_url, caption=caption, reply_markup=markup, parse_mode="Markdown")
+        # Photo + HTML parse mode
+        bot.send_photo(chat_id, photo=image_url, caption=caption, reply_markup=markup, parse_mode="HTML")
     except Exception as e:
-        # Agar image load nahi hui toh sirf text bhej dega
-        bot.send_message(chat_id, caption, reply_markup=markup, parse_mode="Markdown")
+        print(f"Image error: {e}")
+        bot.send_message(chat_id, caption, reply_markup=markup, parse_mode="HTML")
+
+@bot.message_handler(commands=['start'])
+def start(m):
+    uid = m.from_user.id
+    
+    if not check_membership(uid):
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("📢 Join Channel (Must)", url=CHANNEL_LINK))
+        markup.add(InlineKeyboardButton("🔄 Check Status", callback_data="check_sub"))
+        bot.send_message(
+            m.chat.id, 
+            "⚠️ <b>Access Denied!</b>\n\nYou must join our official channel to use this bot.\nJoin and click 'Check Status'.", 
+            reply_markup=markup,
+            parse_mode="HTML"
+        )
+        return
+
+    send_welcome_menu(m.chat.id, m.from_user.first_name, uid)
 
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def callback_check(call):
     uid = call.from_user.id
     if check_membership(uid):
         bot.answer_callback_query(call.id, "✅ Verified!")
-        # Purana access denied message delete karke naya image wala bhej dega
-        bot.delete_message(call.message.chat.id, call.message.message_id) 
+        bot.delete_message(call.message.chat.id, call.message.message_id)
         send_welcome_menu(call.message.chat.id, call.from_user.first_name, uid)
     else:
         bot.answer_callback_query(call.id, "❌ Not Joined Yet!", show_alert=True)
-
-
 
 # ==========================================
 # 📢 BROADCAST SYSTEM
