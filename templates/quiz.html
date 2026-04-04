@@ -774,20 +774,20 @@ function showFloatingText(x, y, text, type) {
 
         
 
-
-           function check(i, btn, event) {
+function check(i, btn, event) {
     clearInterval(tInt); // Timer roko
     let q = questions[curr];
     
-    // 1. Saare buttons ko ek variable me lo
-    let allOptions = document.querySelectorAll('.opt-btn');
-    
-    // 2. Buttons disable karo (Taaki user dubara click na kare)
-    allOptions.forEach(d => d.onclick = null);
+    // NAYA LOGIC: Saare options dhoondho aur unhe lock karo
+    let optsContainer = document.getElementById('opts');
+    let allOptions = optsContainer.querySelectorAll('.opt-btn');
+    allOptions.forEach(d => { 
+        d.onclick = null; 
+        d.style.pointerEvents = 'none'; // Double click roko
+    });
     
     if(settings.sound) sfxClick.play();
 
-    // Click coordinates (Animation ke liye)
     let x = event ? event.clientX : window.innerWidth / 2;
     let y = event ? event.clientY : window.innerHeight / 2;
 
@@ -801,9 +801,9 @@ function showFloatingText(x, y, text, type) {
         if(mode==='mistake') solvedMistakes.push(q.q);
     } else {
         // --- GALAT JAWAB ---
-        if(btn) btn.classList.add('wrong'); // Jo dabaya wo RED ho jayega
+        if(btn) btn.classList.add('wrong'); // Dabaya hua red
         
-        // Jo Sahi button hai, use dhundh kar GREEN kar do
+        // Sahi wale ko dhundh kar green karo
         if(allOptions[q.ans]) {
             allOptions[q.ans].classList.add('correct');
         }
@@ -819,11 +819,11 @@ function showFloatingText(x, y, text, type) {
 
     document.getElementById('curr-score').innerText = score;
     
-    // 3. 3 Seconds (3000ms) rukne ke baad Next Question laao
+    // --- 3 SECONDS (3000ms) WAIT ---
     setTimeout(()=>{ curr++; loadQ(); }, 3000); 
 }
 
-
+           
 
         
         function finishQuiz() {
