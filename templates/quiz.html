@@ -774,14 +774,15 @@ function showFloatingText(x, y, text, type) {
 
         
 
-        function check(i, btn, event) {
+
+           function check(i, btn, event) {
     clearInterval(tInt); // Timer roko
     let q = questions[curr];
     
-    // 1. Saare buttons ko ek variable me lo (taaki sahi button dhundh sakein)
+    // 1. Saare buttons ko ek variable me lo
     let allOptions = document.querySelectorAll('.opt-btn');
     
-    // 2. Buttons disable karo
+    // 2. Buttons disable karo (Taaki user dubara click na kare)
     allOptions.forEach(d => d.onclick = null);
     
     if(settings.sound) sfxClick.play();
@@ -791,7 +792,7 @@ function showFloatingText(x, y, text, type) {
     let y = event ? event.clientY : window.innerHeight / 2;
 
     if(i === q.ans) {
-        // --- SAHI JAWAB (User ne sahi dabaya) ---
+        // --- SAHI JAWAB ---
         if(btn) btn.classList.add('correct');
         score += 4;
         showFloatingText(x, y, "+4", "win");
@@ -799,10 +800,10 @@ function showFloatingText(x, y, text, type) {
         if(settings.vib) tg.HapticFeedback.impactOccurred('light');
         if(mode==='mistake') solvedMistakes.push(q.q);
     } else {
-        // --- GALAT JAWAB (User ne galat dabaya) ---
+        // --- GALAT JAWAB ---
         if(btn) btn.classList.add('wrong'); // Jo dabaya wo RED ho jayega
         
-        // ✨ MAGIC UPDATE: Jo Sahi button hai, use dhundh kar GREEN kar do
+        // Jo Sahi button hai, use dhundh kar GREEN kar do
         if(allOptions[q.ans]) {
             allOptions[q.ans].classList.add('correct');
         }
@@ -818,8 +819,8 @@ function showFloatingText(x, y, text, type) {
 
     document.getElementById('curr-score').innerText = score;
     
-    // 3. Thoda time badhaya (1.5s) taaki user sahi answer dekh sake
-    setTimeout(()=>{ curr++; loadQ(); }, 1500); 
+    // 3. 3 Seconds (3000ms) rukne ke baad Next Question laao
+    setTimeout(()=>{ curr++; loadQ(); }, 3000); 
 }
 
 
