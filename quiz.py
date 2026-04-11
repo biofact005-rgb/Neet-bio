@@ -20,7 +20,7 @@ ADMIN_ID = 8557964907
 # Channel Details for Verification
 CHANNEL_USERNAME = "@errorkid_05" 
 CHANNEL_LINK = "https://t.me/errorkid_05"
-CHANNEL_LINK1 = "https://t.me/+wttsW0EvoRZhMzNl"
+CHANNEL_LINK1 = "https://t.me/+xHIueY41U3syODE1"
 
 MONGO_URI = os.getenv("MONGO_URI")
 
