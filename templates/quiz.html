@@ -737,12 +737,15 @@ function showFloatingText(x, y, text, type) {
         }
 
         // NAYA FUNCTION: Unlimited mode engine
+                // NAYA FUNCTION: Unlimited mode engine (No Shuffle)
         function startUnlimited() {
             let ref = fullData; path.forEach(k=> ref=ref[k]);
             questions = []; 
-            // Collect all questions without slicing/limits
+            
+            // Saare questions line-wise collect honge
             selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-            questions.sort(()=>Math.random()-0.5); 
+            
+            // YAHAN SE SHUFFLE WALI LINE HATA DI GAYI HAI taaki sequence same rahe
             
             if(questions.length===0) return tg.showAlert("No Questions!");
             
@@ -750,6 +753,7 @@ function showFloatingText(x, y, text, type) {
             window.quizTimerStart = null; 
             startEngine();
         }
+
 
         function finalStart() {
             let ref = fullData; path.forEach(k=> ref=ref[k]);
