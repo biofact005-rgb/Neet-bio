@@ -84,14 +84,19 @@ def calculate_grade_stats(xp):
 
 def parse_txt_file(content):
     lines = content.splitlines()
-    meta = {"source": None, "type": None, "chapter": None}
+    # Yahan 'mode' add kiya gaya hai default 'normal' ke sath
+    meta = {"source": None, "type": None, "chapter": None, "mode": "normal"} 
     questions = []
     for line in lines[:15]:
         lower = line.lower()
         if "source:" in lower: meta["source"] = line.split(":",1)[1].strip()
         if "type:" in lower: meta["type"] = line.split(":",1)[1].strip()
         if "chapter:" in lower: meta["chapter"] = line.split(":",1)[1].strip()
-    if not all(meta.values()): return None, "❌ Header Missing!"
+        if "mode:" in lower: meta["mode"] = line.split(":",1)[1].strip().lower() # Naya line
+        
+    if not meta["source"] or not meta["type"] or not meta["chapter"]: 
+        return None, "❌ Header Missing!"
+        
     for line in lines:
         if "|" in line and "SOURCE:" not in line:
             parts = [p.strip() for p in line.split("|")]
@@ -102,6 +107,7 @@ def parse_txt_file(content):
                         questions.append({"q": parts[0], "opts": parts[1:5], "ans": ans})
                 except: pass
     return meta, questions
+
 
 # ==========================================
 # 🤖 BOT HANDLERS
@@ -292,7 +298,7 @@ def handle_docs(message):
             return
 
         filter_q = {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter']}
-        update_q = {"$set": {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter'], "data": data}}
+        update_q = {"$set": {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter'], "mode": meta['mode'], "data": data}}
         questions_col.update_one(filter_q, update_q, upsert=True)
         bot.reply_to(message, f"☁️ Saved: {meta['chapter']} ({len(data)} Qs)")
 
@@ -313,10 +319,14 @@ def get_data():
     tree = {}
     for doc in all_docs:
         src, typ, chap = doc['source'], doc['type'], doc['chapter']
+        mode = doc.get('mode', 'normal') # Mode nikal rahe hain
         if src not in tree: tree[src] = {}
         if typ not in tree[src]: tree[src][typ] = {}
-        tree[src][typ][chap] = doc['data']
+        # Yahan structure change kiya hai taaki data aur mode dono jayein
+        tree[src][typ][chap] = {"data": doc['data'], "mode": mode} 
     return jsonify(tree)
+
+
 
 @app.route('/api/user/sync', methods=['POST'])
 def sync_user():
