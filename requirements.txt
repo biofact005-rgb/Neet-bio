@@ -7,3 +7,4 @@ dnspython
 flask-socketio
 eventlet
 gunicorn
+fpdf
