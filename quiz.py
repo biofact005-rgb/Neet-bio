@@ -107,26 +107,6 @@ def parse_txt_file(content):
 # 🤖 BOT HANDLERS
 # ==========================================
 
-@bot.message_handler(commands=['start'])
-def start(m):
-    uid = m.from_user.id
-    
-    # 1. Check Membership
-    if not check_membership(uid):
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📢 𝙅𝙤𝙞𝙣 𝘾𝙝𝙖𝙣𝙣𝙚𝙡 (𝙈𝙪𝙨𝙩) 📢", url=CHANNEL_LINK))
-        markup.add(InlineKeyboardButton("🔄 𝘾𝙝𝙚𝙘𝙠 𝙎𝙩𝙖𝙩𝙪𝙨 🔄", callback_data="check_sub"))
-        
-        bot.send_message(
-            m.chat.id, 
-            "⚠️ **𝗔𝗰𝗰𝗲𝘀𝘀 𝗗𝗲𝗻𝗶𝗲𝗱!**\n\nYou must join our official channel to use this bot.\nJoin and click 'Check Status'.", 
-            reply_markup=markup,
-            parse_mode="Markdown"
-        )
-        return
-
-    # 2. If Joined, Show Fancy App Menu
-    send_welcome_menu(m.chat.id, m.from_user.first_name, m.from_user.id)
 
 
 def send_welcome_menu(chat_id, first_name, user_id):
@@ -265,25 +245,6 @@ def export_backup(message):
 
 
     
-def callback_check(call):
-    uid = call.from_user.id
-    if check_membership(uid):
-        # Allow Access
-        bot.answer_callback_query(call.id, "✅ Verified!")
-        app_url = os.getenv("WEB_APP_URL", WEB_APP_URL)
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🧬 OPEN NEET PRO", web_app=WebAppInfo(url=app_url)))
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"Welcome Future Doctor, {call.from_user.first_name}! 🩺\n\n✅ **Verification Successful**",
-            reply_markup=markup
-        )
-    else:
-        # Still not joined
-        bot.answer_callback_query(call.id, "❌ Not Joined Yet!", show_alert=True)
-
-@bot.message_handler(content_types=['document'])
 
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
