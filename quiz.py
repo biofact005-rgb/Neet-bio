@@ -9,6 +9,8 @@ import threading, os, time
 import certifi 
 import json
 from datetime import datetime
+from fpdf import FPDF
+
 
 # ==========================================
 # ⚙️ CONFIGURATION
@@ -326,31 +328,95 @@ def get_data():
         tree[src][typ][chap] = {"data": doc['data'], "mode": mode} 
     return jsonify(tree)
 
-
-
 @app.route('/api/user/sync', methods=['POST'])
 def sync_user():
     if not db_connected: return jsonify({"error": "No DB"})
     data = request.json
     uid, name = str(data.get('id')), data.get('name')
     score_add = int(data.get('add_score', 0))
-    mistakes = data.get('mistakes', []); solved = data.get('solved', [])
+    mistakes = data.get('mistakes', [])
+    solved = data.get('solved', [])
     
     user = users_col.find_one({"_id": uid})
-    if not user: user = {"_id": uid, "name": name, "xp": 0, "mistakes": []}; users_col.insert_one(user)
+    if not user: 
+        user = {"_id": uid, "name": name, "xp": 0, "mistakes": []}
+        users_col.insert_one(user)
     
     new_xp = max(0, user.get('xp', 0) + score_add)
-    if score_add > 0: logs_col.insert_one({"uid": uid, "name": name, "score": score_add, "ts": time.time()})
+    if score_add > 0: 
+        logs_col.insert_one({"uid": uid, "name": name, "score": score_add, "ts": time.time()})
     
     curr_mistakes = user.get('mistakes', [])
     exist = {m['q'] for m in curr_mistakes}
+    
+    # PDF ban banane ke liye current quiz ki mistakes ko alag se filter karna
+    new_mistakes_for_pdf = []
+    
     for m in mistakes: 
-        if m['q'] not in exist: curr_mistakes.append(m)
-    if solved: curr_mistakes = [m for m in curr_mistakes if m['q'] not in solved]
+        if m['q'] not in exist: 
+            curr_mistakes.append(m)
+            new_mistakes_for_pdf.append(m)
+            
+    if solved: 
+        curr_mistakes = [m for m in curr_mistakes if m['q'] not in solved]
         
     users_col.update_one({"_id": uid}, {"$set": {"xp": new_xp, "name": name, "mistakes": curr_mistakes}})
+    
+    # =======================================
+    # 📄 PDF GENERATION & SEND LOGIC
+    # =======================================
+    if new_mistakes_for_pdf:
+        try:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            
+            # Title
+            pdf.set_font("Arial", 'B', 16)
+            pdf.cell(200, 10, txt="Quiz Mistakes Report", ln=True, align='C')
+            pdf.set_font("Arial", size=12)
+            pdf.ln(10)
+            
+            # Write Questions
+            for idx, m in enumerate(new_mistakes_for_pdf):
+                # Using encode/decode to avoid Unicode errors with FPDF
+                q_text = f"Q{idx+1}: {m['q']}".encode('latin-1', 'replace').decode('latin-1')
+                pdf.set_font("Arial", 'B', 11)
+                pdf.multi_cell(0, 10, txt=q_text)
+                
+                pdf.set_font("Arial", size=10)
+                for i, opt in enumerate(m['opts']):
+                    prefix = "[ CORRECT ] " if i == m['ans'] else " - "
+                    opt_text = f"{prefix}{opt}".encode('latin-1', 'replace').decode('latin-1')
+                    pdf.multi_cell(0, 8, txt=opt_text)
+                pdf.ln(5)
+                
+            # Save and Send
+            file_name = f"Mistakes_{uid}_{int(time.time())}.pdf"
+            pdf.output(file_name)
+            
+            with open(file_name, 'rb') as f:
+                bot.send_document(
+                    uid, 
+                    f, 
+                    caption="🚨 **Your Quiz Analytics**\n\nHere is a PDF of the questions you got wrong. Review them to improve your weak spots!",
+                    parse_mode="Markdown"
+                )
+            os.remove(file_name) # Cleanup
+        except Exception as e:
+            print(f"PDF Error: {e}")
+
     stats = calculate_grade_stats(new_xp)
-    return jsonify({"grade": f"Grade {stats['grade']}", "current_xp": stats['current_xp'], "req_xp": stats['req_xp'], "percent": stats['percent'], "mistake_count": len(curr_mistakes), "mistakes_list": curr_mistakes})
+    return jsonify({
+        "grade": f"Grade {stats['grade']}", 
+        "current_xp": stats['current_xp'], 
+        "req_xp": stats['req_xp'], 
+        "percent": stats['percent'], 
+        "mistake_count": len(curr_mistakes), 
+        "mistakes_list": curr_mistakes
+    })
+
+
 
 @app.route('/api/leaderboard/<filter>')
 def leaderboard(filter):
