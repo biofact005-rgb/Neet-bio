@@ -544,6 +544,15 @@
             <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-time">0s</div><div style="font-size:0.75rem; color:#888;">Time Taken</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-total">0</div><div style="font-size:0.75rem; color:#888;">Questions</div></div>
         </div>
+
+            <div id="review-screen" class="screen">
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">REVIEW ROOM</h2>
+        <div id="review-list" style="overflow-y:auto; flex:1; margin-bottom:15px; padding-right:5px;"></div>
+        <button onclick="document.getElementById('review-screen').style.display='none'; document.getElementById('result-screen').style.display='flex';" class="stop-btn" style="border-color:#444; color:#aaa;">🔙 BACK TO RESULT</button>
+    </div>
+
+      <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
+        
         <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
     </div>
 
@@ -569,7 +578,7 @@
         }
 
         // STATE
-        let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], solvedMistakes = [];
+        let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], solvedMistakes = [], reviewData = [];
         let curr = 0, score = 0, timer = 30, tInt, wrongCount = 0;
         let mode = 'normal';
         let settings = JSON.parse(localStorage.getItem('jjk_set')) || {sound: true, vib: true};
@@ -784,6 +793,7 @@ function showFloatingText(x, y, text, type) {
             document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
             document.getElementById('game-screen').style.display='flex';
             curr=0; score=0; mistakes=[]; solvedMistakes=[]; wrongCount=0;
+            reviewData = [];
             startTime = new Date();
             loadQ();
         }
@@ -865,12 +875,14 @@ function check(i, btn, event) {
     }
 
     document.getElementById('curr-score').innerText = score;
+
+    
+    // YAHAN NAYI LINE ADD KARNI HAI 👇
+    reviewData.push({ q: q.q, opts: q.opts, ans: q.ans, user_ans: i });
     
     // --- 3 SECONDS (3000ms) WAIT ---
     setTimeout(()=>{ curr++; loadQ(); }, 3000); 
 }
-
-           
 
         
         function finishQuiz() {
@@ -940,6 +952,8 @@ function check(i, btn, event) {
             if(!confirm(`Delete "${target}"?`)) return;
             fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
         }
+
+        
 
       // ============================
 // ⚔️ BATTLE LOGIC (Client)
@@ -1141,7 +1155,44 @@ function endBattle() {
     goHome();
 }
 
-        
-    </script>
+        function showReview() {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('review-screen').style.display='flex';
+            let list = document.getElementById('review-list');
+            list.innerHTML = '';
+            
+            reviewData.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = 'q-container';
+                div.style.marginBottom = '15px';
+                div.style.padding = '15px';
+                
+                let html = `<div style="font-weight:bold; margin-bottom:10px; font-size:0.95rem;">Q${index+1}: ${item.q}</div>`;
+                
+                item.opts.forEach((opt, optIdx) => {
+                    let color = '#ddd';
+                    let bg = 'rgba(255,255,255,0.03)';
+                    let border = '1px solid rgba(255,255,255,0.08)';
+                    
+                    if (optIdx === item.ans) {
+                        // Sahi Option (Green)
+                        color = 'var(--primary)'; bg = 'rgba(74, 222, 128, 0.1)'; border = '1px solid var(--primary)';
+                    } else if (optIdx === item.user_ans && item.user_ans !== item.ans) {
+                        // User ka Galat Option (Red)
+                        color = 'var(--danger)'; bg = 'rgba(239, 68, 68, 0.1)'; border = '1px solid var(--danger)';
+                    }
+                    
+                    html += `<div style="padding:10px; margin-bottom:5px; border-radius:8px; background:${bg}; border:${border}; color:${color}; font-size:0.85rem;">${opt}</div>`;
+                });
+                
+                div.innerHTML = html;
+                list.appendChild(div);
+            });
+        }
+
+            } // Ye showReview function ka aakhri bracket hai (Line 1191)
+
+</script>
 </body>
 </html>
+
