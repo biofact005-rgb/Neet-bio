@@ -333,6 +333,35 @@
 .waiting-anim { animation: pulse 1s infinite; color:var(--gold); font-size:1.2rem; text-align:center; margin-top:20px;}
 @keyframes pulse { 0% { opacity:0.5; } 100% { opacity:1; } }
 
+
+                /* --- COMBO STRIKE GLOW (HOLLOW PURPLE VIBE) --- */
+        .combo-glow {
+            box-shadow: inset 0 0 60px rgba(168, 85, 247, 0.4), 0 0 30px rgba(168, 85, 247, 0.6) !important;
+            border: 2px solid #a855f7 !important;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+
+        /* --- QUESTION NAVIGATION PALETTE --- */
+        .q-palette {
+            display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 15px;
+            scrollbar-width: none; scroll-behavior: smooth;
+        }
+        .q-palette::-webkit-scrollbar { display: none; }
+        
+        .pal-btn {
+            flex-shrink: 0; width: 45px; height: 45px; border-radius: 12px;
+            background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron'; font-weight: bold; font-size: 1.1rem;
+            cursor: pointer; transition: 0.3s;
+        }
+        /* State Colors */
+        .pal-btn.active { background: var(--primary); color: #000; border-color: var(--primary); transform: scale(1.15); box-shadow: 0 0 15px var(--primary); }
+        .pal-btn.solved { background: rgba(74, 222, 128, 0.2); border-color: var(--primary); color: var(--primary); }
+        .pal-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger); }
+        .pal-btn.skipped { background: rgba(255, 215, 0, 0.2); border-color: var(--gold); color: var(--gold); }
+
         
     </style>
 </head>
@@ -489,14 +518,20 @@
         <button onclick="document.getElementById('setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
     </div>
 
+
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; z-index:2;">
             <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
             <div style="color:var(--primary); font-family:'Orbitron'; font-size:1.1rem;">XP: <span id="curr-score">0</span></div>
         </div>
-        <div class="q-container">
+        
+        <div id="q-palette" class="q-palette"></div>
+
+        <div class="q-container" id="main-q-box">
             <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
         </div>
+
+    
         <div id="opts" style="z-index:2; position:relative;"></div>
         <div style="display:flex; gap:10px; margin-top:15px; z-index:2; position:relative;">
             <button id="skip-btn" onclick="skipQuestion()" style="flex:1; padding:15px; background:transparent; border:1px solid #666; color:#aaa; border-radius:12px; font-family:'Orbitron'; font-weight:bold;">⏭️ SKIP</button>
@@ -775,110 +810,8 @@ function showFloatingText(x, y, text, type) {
             mode='mistake'; window.quizTimerStart = 30; startEngine();
         }
 
-        function startEngine() {
-            switchTheme('quiz');
-            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-            document.getElementById('game-screen').style.display='flex';
-            curr=0; score=0; mistakes=[]; solvedMistakes=[]; wrongCount=0;
-            reviewData = [];
-            startTime = new Date();
-            loadQ();
-        }
-
-        function loadQ() {
-            if(curr>=questions.length) return finishQuiz();
-            let q = questions[curr];
-            document.getElementById('q-txt').innerText = q.q;
-            let optsDiv = document.getElementById('opts'); optsDiv.innerHTML='';
-            q.opts.forEach((o, i)=>{
-                let d = document.createElement('div'); d.className='opt-btn'; d.innerText=o;
-                d.onclick = (e) => check(i, d, e);
         
-                optsDiv.appendChild(d);
-            });
-
-                        // Buttons Reset
-            document.getElementById('skip-btn').style.display = 'block';
-            document.getElementById('next-btn').style.display = 'none';
-            
-            // TIMER LOGIC WITH BYPASS...
-            
-            
-            // TIMER LOGIC WITH BYPASS
-            if (mode === 'unlimited') {
-                document.getElementById('timer-box').style.display = 'none';
-                clearInterval(tInt);
-            } else {
-                document.getElementById('timer-box').style.display = 'block';
-                timer = window.quizTimerStart; 
-                document.getElementById('timer-box').innerText = timer + 's';
-                clearInterval(tInt); 
-                tInt = setInterval(updateTimer, 1000);
-            }
-        }
-
-
-        function updateTimer() {
-            let box = document.getElementById('timer-box'); box.innerText = timer + 's';
-            if(timer-- <= 0) check(-1, null);
-        }
-
-        
-
-function check(i, btn, event) {
-    clearInterval(tInt); // Timer roko
-    let q = questions[curr];
     
-    // NAYA LOGIC: Saare options dhoondho aur unhe lock karo
-    let optsContainer = document.getElementById('opts');
-    let allOptions = optsContainer.querySelectorAll('.opt-btn');
-    allOptions.forEach(d => { 
-        d.onclick = null; 
-        d.style.pointerEvents = 'none'; // Double click roko
-    });
-    
-    if(settings.sound) sfxClick.play();
-
-    let x = event ? event.clientX : window.innerWidth / 2;
-    let y = event ? event.clientY : window.innerHeight / 2;
-
-    if(i === q.ans) {
-        // --- SAHI JAWAB ---
-        if(btn) btn.classList.add('correct');
-        score += 4;
-        showFloatingText(x, y, "+4", "win");
-        
-        if(settings.vib) tg.HapticFeedback.impactOccurred('light');
-        if(mode==='mistake') solvedMistakes.push(q.q);
-    } else {
-        // --- GALAT JAWAB ---
-        if(btn) btn.classList.add('wrong'); // Dabaya hua red
-        
-        // Sahi wale ko dhundh kar green karo
-        if(allOptions[q.ans]) {
-            allOptions[q.ans].classList.add('correct');
-        }
-        
-        score -= 1;
-        wrongCount++;
-        showFloatingText(x, y, "-1", "loss");
-        
-        if(settings.sound) sfxErr.play();
-        if(settings.vib) tg.HapticFeedback.notificationOccurred('error');
-        if(mode!=='mistake') mistakes.push(q);
-    }
-
-    document.getElementById('curr-score').innerText = score;
-
-    
-    // YAHAN NAYI LINE ADD KARNI HAI 👇
-    // YAHAN NAYI LINE ADD KARNI HAI 👇 (Review data wali, jo tumne lagayi thi)
-    reviewData.push({ q: q.q, opts: q.opts, ans: q.ans, user_ans: i });
-    
-    // YAHAN SE SET TIMEOUT WALI LINE HATA DO AUR YE DALO 👇
-    document.getElementById('skip-btn').style.display = 'none';
-    document.getElementById('next-btn').style.display = 'block';
-}
         
             function nextQuestion() {
             curr++;
@@ -898,26 +831,21 @@ function check(i, btn, event) {
         
     
 
+            <div id="game-screen" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; z-index:2;">
+            <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
+            <div style="color:var(--primary); font-family:'Orbitron'; font-size:1.1rem;">XP: <span id="curr-score">0</span></div>
+        </div>
         
-        function finishQuiz() {
-            clearInterval(tInt);
-            endTime = new Date();
-            let duration = Math.round((endTime - startTime) / 1000);
-            let total = curr + (timer < 0 ? 1 : 0);
-            let correct = total - wrongCount;
-            let acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+        <div id="q-palette" class="q-palette"></div>
 
-            switchTheme('home');
-            document.getElementById('game-screen').style.display='none';
-            document.getElementById('result-screen').style.display='flex';
-            document.getElementById('final-score').innerText = score > 0 ? "+" + score : score;
-            document.getElementById('res-acc').innerText = acc + "%";
-            document.getElementById('res-wrong').innerText = wrongCount;
-            document.getElementById('res-time').innerText = duration + "s";
-            document.getElementById('res-total').innerText = total;
-            selChaps = []; 
-            sync(score);
-        }
+        <div class="q-container" id="main-q-box">
+            <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
+        </div>
+
+        
+
+            
         
         function loadLb(filter, btn) {
           if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
