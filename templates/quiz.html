@@ -530,9 +530,14 @@
         </div>
         <div id="opts" style="z-index:2; position:relative;"></div>
 
-        <div class="stop-btn" onclick="finishQuiz()">🛑 STOP & SUBMIT</div>
-    </div>
+                <div style="display:flex; gap:10px; margin-top:15px; z-index:2; position:relative;">
+            <button id="skip-btn" onclick="skipQuestion()" style="flex:1; padding:15px; background:transparent; border:1px solid #666; color:#aaa; border-radius:12px; font-family:'Orbitron'; font-weight:bold;">⏭️ SKIP</button>
+            <button id="next-btn" onclick="nextQuestion()" style="flex:1; padding:15px; background:var(--primary); border:none; color:#000; border-radius:12px; font-family:'Orbitron'; font-weight:bold; display:none;">NEXT ➡️</button>
+        </div>
 
+        <div class="stop-btn" onclick="finishQuiz()" style="margin-top:10px; z-index:2; position:relative;">🛑 STOP & SUBMIT</div>
+
+    
     <div id="result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 style="color:var(--primary); font-family:'Orbitron'; letter-spacing:2px;">RESULT</h2>
         <div style="font-size:4rem; font-weight:800; font-family:'Orbitron'; margin:10px 0; text-shadow:0 0 30px rgba(74,222,128,0.3);" id="final-score">0</div>
@@ -829,6 +834,13 @@ function showFloatingText(x, y, text, type) {
         
                 optsDiv.appendChild(d);
             });
+
+                        // Buttons Reset
+            document.getElementById('skip-btn').style.display = 'block';
+            document.getElementById('next-btn').style.display = 'none';
+            
+            // TIMER LOGIC WITH BYPASS...
+            
             
             // TIMER LOGIC WITH BYPASS
             if (mode === 'unlimited') {
@@ -898,11 +910,31 @@ function check(i, btn, event) {
 
     
     // YAHAN NAYI LINE ADD KARNI HAI 👇
+    // YAHAN NAYI LINE ADD KARNI HAI 👇 (Review data wali, jo tumne lagayi thi)
     reviewData.push({ q: q.q, opts: q.opts, ans: q.ans, user_ans: i });
     
-    // --- 3 SECONDS (3000ms) WAIT ---
-    setTimeout(()=>{ curr++; loadQ(); }, 3000); 
+    // YAHAN SE SET TIMEOUT WALI LINE HATA DO AUR YE DALO 👇
+    document.getElementById('skip-btn').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'block';
 }
+        
+            function nextQuestion() {
+            curr++;
+            loadQ();
+        }
+
+        function skipQuestion() {
+            clearInterval(tInt); // Timer rok do
+            let q = questions[curr];
+            
+            // Question ko skipped mark karo (user_ans = -1)
+            reviewData.push({ q: q.q, opts: q.opts, ans: q.ans, user_ans: -1 });
+            
+            curr++;
+            loadQ();
+        }
+        
+    
 
         
         function finishQuiz() {
