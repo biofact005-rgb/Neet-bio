@@ -456,75 +456,54 @@ def delete_item():
     # ==========================================
 # ⚔️ 1v1 BATTLE LOGIC (SocketIO)
 # ==========================================
-def generate_room_code():
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+
+
+
 
 @socketio.on('create_room')
-def handle_create_room(data):
-    room_id = generate_room_code()
-    uid = data['uid']
-    name = data['name']
-    
+def handle_create(data):
+    room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
     ROOMS[room_id] = {
-        "p1": {"id": uid, "name": name, "score": 0, "sid": request.sid},
+        "host": data['uid'],
+        "p1": {"id": data['uid'], "name": data['name'], "score": 0, "sid": request.sid},
         "p2": None,
-        "status": "waiting",
-        "questions": []
+        "questions": data.get('questions', []), # Host ke custom questions
+        "timer": data.get('timer', 30), # Host ka custom timer
+        "answered": set() # Anti-crash ke liye
     }
     join_room(room_id)
-    emit('room_created', {"room_id": room_id}, room=request.sid)
+    emit('room_created', {"room_id": room_id}, to=request.sid)
 
 @socketio.on('join_room_request')
-def handle_join_room(data):
-    room_id = data['room_id']
-    uid = data['uid']
-    name = data['name']
-    
-    if room_id in ROOMS and ROOMS[room_id]["p2"] is None:
-        ROOMS[room_id]["p2"] = {"id": uid, "name": name, "score": 0, "sid": request.sid}
-        ROOMS[room_id]["status"] = "ready"
-        join_room(room_id)
-        # Notify both players
-        emit('player_joined', {
-            "p1": ROOMS[room_id]["p1"]["name"],
-            "p2": name
-        }, room=room_id)
-    else:
-        emit('error', {"msg": "Room Full or Invalid"}, room=request.sid)
-
-
-@socketio.on('start_game')
-def handle_start_game(data):
+def handle_join(data):
     room_id = data['room_id']
     if room_id in ROOMS:
-        # 1. Sare Chapters nikalo
-        cursor = questions_col.find({}) 
-        
-        all_questions = []
-        
-        # 2. Har chapter ke andar se 'data' (questions) nikalo
-        for doc in cursor:
-            if 'data' in doc and isinstance(doc['data'], list):
-                all_questions.extend(doc['data']) 
-        
-        # 3. Ab inme se 5 random sawal chuno
-        if all_questions:
-            count = min(5, len(all_questions))
-            game_qs = random.sample(all_questions, count)
-            
-            ROOMS[room_id]["questions"] = game_qs
-            ROOMS[room_id]["status"] = "playing"
-            
-            # 4. Client ko sawal bhejo
-            emit('game_started', {"questions": game_qs}, room=room_id)
+        if ROOMS[room_id]["p2"] is None:
+            ROOMS[room_id]["p2"] = {"id": data['uid'], "name": data['name'], "score": 0, "sid": request.sid}
+            join_room(room_id)
+            emit('player_joined', {"p1": ROOMS[room_id]["p1"]["name"], "p2": data['name']}, room=room_id)
         else:
-            # Ye wali line dhyan se paste karein
-            emit('error', {"msg": "No questions found in Database!"}, room=room_id)
+            emit('error', {"msg": "Room is Full!"}, to=request.sid)
+    else:
+        emit('error', {"msg": "Invalid Room Code!"}, to=request.sid)
 
+@socketio.on('kick_player')
+def handle_kick(data):
+    room_id = data['room_id']
+    uid = data['uid']
+    if room_id in ROOMS and ROOMS[room_id]['host'] == uid:
+        if ROOMS[room_id]["p2"]:
+            p2_sid = ROOMS[room_id]["p2"]["sid"]
+            ROOMS[room_id]["p2"] = None
+            emit('kicked', {"msg": "Host removed you from the room"}, to=p2_sid)
+            leave_room(room_id, sid=p2_sid)
+            emit('player_joined', {"p1": ROOMS[room_id]["p1"]["name"], "p2": None}, room=room_id)
 
-
-
-
+@socketio.on('start_game')
+def handle_start(data):
+    room_id = data['room_id']
+    if room_id in ROOMS:
+        emit('game_started', {"questions": ROOMS[room_id]["questions"], "timer": ROOMS[room_id]["timer"]}, room=room_id)
 
 @socketio.on('submit_answer')
 def handle_answer(data):
@@ -537,20 +516,16 @@ def handle_answer(data):
         if room["p1"]["id"] == uid: room["p1"]["score"] = score
         elif room["p2"] and room["p2"]["id"] == uid: room["p2"]["score"] = score
         
-        # Live Score update
         emit('opponent_update', {"p1_score": room["p1"]["score"], "p2_score": room["p2"]["score"] if room["p2"] else 0}, room=room_id)
 
-        # NAYA LOGIC: Prevent double clicks causing crashes
-        if "answered_by" not in room:
-            room["answered_by"] = set()
-            
-        room["answered_by"].add(uid)
-
-        # Check agar dono ne answer de diya hai
-        if len(room["answered_by"]) >= 2:
-            room["answered_by"].clear() # Agle question ke liye reset
+        # Bug Free Question Jump Logic
+        room["answered"].add(uid)
+        if len(room["answered"]) >= 2:
+            room["answered"].clear()
             emit('next_question', room=room_id)
-            
+
+
+
 
       
 
