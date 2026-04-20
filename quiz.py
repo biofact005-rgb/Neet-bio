@@ -537,16 +537,20 @@ def handle_answer(data):
         if room["p1"]["id"] == uid: room["p1"]["score"] = score
         elif room["p2"] and room["p2"]["id"] == uid: room["p2"]["score"] = score
         
-        # Live Score update (Sabko bhejo)
+        # Live Score update
         emit('opponent_update', {"p1_score": room["p1"]["score"], "p2_score": room["p2"]["score"] if room["p2"] else 0}, room=room_id)
 
+        # NAYA LOGIC: Prevent double clicks causing crashes
+        if "answered_by" not in room:
+            room["answered_by"] = set()
+            
+        room["answered_by"].add(uid)
+
         # Check agar dono ne answer de diya hai
-        room["answered_count"] = room.get("answered_count", 0) + 1
-        if room["answered_count"] >= 2:
-            room["answered_count"] = 0
+        if len(room["answered_by"]) >= 2:
+            room["answered_by"].clear() # Agle question ke liye reset
             emit('next_question', room=room_id)
-
-
+            
 
       
 
