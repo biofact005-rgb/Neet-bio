@@ -397,11 +397,10 @@
             </div>
         </div>
 
-                <div class="allen-btn" onclick="openBattleChoice()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
+        <div class="allen-btn" onclick="openBattleChoice()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
             <div class="allen-text" style="color:var(--gold);">1 v 1 BATTLE</div>
             <div style="font-size:0.8rem; color:#888;">CHALLENGE FRIEND</div>
-                </div>
-        
+        </div>
 
         <div class="glass-box" id="curse-box" style="display:none; border:1px solid var(--danger); text-align:center; cursor:pointer; margin-top:30px;" onclick="startMistakes()">
             <div style="color:var(--danger); font-family:'Orbitron'; font-size:1rem;">🚨 WEAK SPOTS FOUND</div>
@@ -423,6 +422,7 @@
         <div id="podium-area" class="podium-box"></div>   
         <div id="lb-list"></div>
     </div>
+
     <div id="battle-choice-screen" class="screen" style="justify-content:center; align-items:center;">
         <h2 style="color:var(--gold); font-family:'Orbitron'; font-size:2rem; margin-bottom:30px;">⚔️ ARENA</h2>
         <div style="width:100%; display:flex; flex-direction:column; gap:15px;">
@@ -435,7 +435,6 @@
 
     <div id="lobby-screen" class="screen">
         <h2 style="text-align:center; color:var(--gold);">⚔️ LOBBY</h2>
-        
         <div class="glass-box" style="text-align:center; padding:30px;">
             <div id="lobby-status">Connecting...</div>
             <h1 id="room-code-display" style="font-size:3.5rem; margin:10px 0; letter-spacing:5px; color:var(--primary);">----</h1>
@@ -447,18 +446,8 @@
             <input type="text" id="join-code-input" placeholder="ENTER 5 DIGIT CODE" style="text-align:center; letter-spacing:3px; font-size:1.2rem; text-transform:uppercase; padding:10px; border-radius:10px; border:1px solid #444; background:#111; color:white; width:80%;" maxlength="5">
             <button onclick="joinRoomManual()" style="background:var(--primary); color:black; margin-top:15px; padding:15px; width:100%; border-radius:10px; font-weight:bold; font-family:'Orbitron';">JOIN MATCH</button>
         </div>
-
         <button onclick="leaveLobby()" class="stop-btn" style="border-color:#444; color:#aaa; margin-top:20px;">LEAVE LOBBY</button>
     </div>
-
-    
-        <div class="glass-box" style="margin-top:20px;">
-            <input type="text" id="join-code-input" placeholder="Enter Friend's Code" style="text-align:center; letter-spacing:3px;">
-            <button onclick="joinRoomManual()" style="background:var(--primary); color:black;">JOIN ROOM</button>
-        </div>
-        <button onclick="tab('home')" class="stop-btn" style="border-color:#444; color:#aaa;">CANCEL</button>
-    </div>
-
 
     <div id="battle-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:rgba(0,0,0,0.4); border-radius:15px; padding:10px; border:1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5);">
@@ -486,14 +475,12 @@
         <div id="battle-q-area" class="q-container" style="padding:20px;">
             <div id="battle-q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500;">Loading Battle...</div>
         </div>
-        
         <div id="battle-opts"></div>
 
         <div id="waiting-msg" style="display:none; text-align:center; margin-top:20px; color:var(--gold); font-weight:bold; font-size:1.1rem; padding:10px; background:rgba(255,215,0,0.1); border-radius:10px; border:1px solid rgba(255,215,0,0.3);">
             ⏳ Waiting for opponent...
         </div>
     </div>
-
 
     <div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
@@ -510,7 +497,6 @@
                 </div>
             </div>
         </div>
-        <button onclick="openBattleLobby()" style="width:100%; padding:18px; background:var(--primary); color:black; border:none; border-radius:15px; font-weight:800; font-family:'Orbitron'; margin-bottom:15px;">REMATCH ⚔️</button>
         <button onclick="tab('home')" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:15px; color:#aaa; font-weight:600;">EXIT ARENA</button>
     </div>
 
@@ -552,7 +538,6 @@
         <button onclick="document.getElementById('setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
     </div>
 
-
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; z-index:2;">
             <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
@@ -565,7 +550,6 @@
             <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
         </div>
 
-    
         <div id="opts" style="z-index:2; position:relative;"></div>
         <div style="display:flex; gap:10px; margin-top:15px; z-index:2; position:relative;">
             <button id="skip-btn" onclick="skipQuestion()" style="flex:1; padding:15px; background:transparent; border:1px solid #666; color:#aaa; border-radius:12px; font-family:'Orbitron'; font-weight:bold;">⏭️ SKIP</button>
@@ -608,13 +592,6 @@
         <div class="dock-item" onclick="switchTheme('prof'); tab('profile', this)">👤</div>
     </div>
 
-    ```
-
-**(Bonus Fix maine khud hi add kar diya hai):** Tumhare "Cancel/Home" buttons `goHome()` function ko dhoondh rahe the jo JavaScript me exist nahi karta tha, usko maine clean tarike se `tab('home')` karke fix kar diya hai.
-
-Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy karo! 🔥
-
-    
     <script>
     const tg = window.Telegram.WebApp;
     tg.expand(); tg.setHeaderColor('#051405');
@@ -636,7 +613,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     let mode = 'normal';
     let settings = JSON.parse(localStorage.getItem('jjk_set')) || {sound: true, vib: true};
     let startTime, endTime;
-    let comboStreak = 0; // NEW: For Combo Strike
+    let comboStreak = 0; 
 
     // SOUNDS
     const sfxClick = new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3");
@@ -646,21 +623,16 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     if(document.getElementById('u-name')) document.getElementById('u-name').innerText = user.first_name;
     if(user.photo_url && document.getElementById('u-pic')) document.getElementById('u-pic').src = user.photo_url;
     if(user.id == 8557964907 && document.getElementById('admin-btn')) document.getElementById('admin-btn').style.display='block';
-    
     if(document.getElementById('tog-sound')) document.getElementById('tog-sound').checked = settings.sound;
     if(document.getElementById('tog-vib')) document.getElementById('tog-vib').checked = settings.vib;
 
     sync();
 
-    // Floating Text Logic
     function showFloatingText(x, y, text, type) {
         let el = document.createElement('div');
-        el.className = 'float-score';
-        el.innerText = text;
-        el.style.left = x + 'px';
-        el.style.top = y + 'px';
-        if(type === 'win') el.style.color = 'var(--primary)';
-        else el.style.color = 'var(--danger)';
+        el.className = 'float-score'; el.innerText = text;
+        el.style.left = x + 'px'; el.style.top = y + 'px';
+        if(type === 'win') el.style.color = 'var(--primary)'; else el.style.color = 'var(--danger)';
         document.body.appendChild(el);
         setTimeout(() => { el.remove(); }, 1000);
     }
@@ -669,8 +641,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         let door = document.getElementById('door-overlay');
         if(door) door.classList.add('door-closed');
         setTimeout(() => {
-            if(action === 'back') back();
-            else nav(p);
+            if(action === 'back') back(); else nav(p);
             setTimeout(() => { if(door) door.classList.remove('door-closed'); }, 500);
         }, 600);
     }
@@ -812,7 +783,6 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         questions = questions.slice(0, limit);
         if(questions.length===0) return tg.showAlert("No Questions!");
         
-                // BATTLE MODE INTERCEPTOR
         if(window.isBattleMode) {
             socket.emit('create_room', {uid: user.id, name: user.first_name, questions: questions, timer: tm});
             window.isBattleMode = false;
@@ -822,9 +792,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
             document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Creating Arena...</div>';
             return;
         }
-
         mode='normal'; window.quizTimerStart = tm; startEngine();
-        
     }
 
     function startMistakes() {
@@ -833,9 +801,6 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         mode='mistake'; window.quizTimerStart = 30; startEngine();
     }
 
-    // ==========================================
-    // ⚙️ THE NEW ENGINE (COMBO + PALETTE)
-    // ==========================================
     function startEngine() {
         switchTheme('quiz');
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
@@ -887,9 +852,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         document.getElementById('q-txt').innerText = q.q;
         
         renderPalette(); 
-        
         let optsDiv = document.getElementById('opts'); optsDiv.innerHTML='';
-        
         let alreadyAnswered = reviewData[curr] && reviewData[curr].user_ans !== null;
         
         q.opts.forEach((o, i)=>{
@@ -899,18 +862,14 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         });
 
         if (alreadyAnswered) {
-            let uAns = reviewData[curr].user_ans;
-            let cAns = reviewData[curr].ans;
+            let uAns = reviewData[curr].user_ans; let cAns = reviewData[curr].ans;
             let allOpts = optsDiv.querySelectorAll('.opt-btn');
             
-            if(uAns === cAns) {
-                if(allOpts[uAns]) allOpts[uAns].classList.add('correct');
-            } else if(uAns !== -1) {
+            if(uAns === cAns) { if(allOpts[uAns]) allOpts[uAns].classList.add('correct'); }
+            else if(uAns !== -1) {
                 if(allOpts[uAns]) allOpts[uAns].classList.add('wrong');
                 if(allOpts[cAns]) allOpts[cAns].classList.add('correct');
-            } else {
-                if(allOpts[cAns]) allOpts[cAns].classList.add('correct'); 
-            }
+            } else { if(allOpts[cAns]) allOpts[cAns].classList.add('correct'); }
             
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('next-btn').style.display = 'block';
@@ -927,8 +886,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
                 document.getElementById('timer-box').style.display = 'block';
                 timer = window.quizTimerStart; 
                 document.getElementById('timer-box').innerText = timer + 's';
-                clearInterval(tInt); 
-                tInt = setInterval(updateTimer, 1000);
+                clearInterval(tInt); tInt = setInterval(updateTimer, 1000);
             }
         }
     }
@@ -942,80 +900,56 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     function check(i, btn, event) {
         clearInterval(tInt); 
         let q = questions[curr];
-        
         let optsContainer = document.getElementById('opts');
         let allOptions = optsContainer.querySelectorAll('.opt-btn');
         allOptions.forEach(d => { d.onclick = null; d.style.pointerEvents = 'none'; });
-        
         if(settings.sound) sfxClick.play();
-
         let x = event ? event.clientX : window.innerWidth / 2;
         let y = event ? event.clientY : window.innerHeight / 2;
 
         if(i === q.ans) {
             if(btn) btn.classList.add('correct');
-            
-            comboStreak++;
-            let bonus = (comboStreak >= 3) ? 2 : 0; 
-            score += (4 + bonus);
-            
+            comboStreak++; let bonus = (comboStreak >= 3) ? 2 : 0; score += (4 + bonus);
             if(comboStreak >= 3) {
                 document.getElementById('main-q-box').classList.add('combo-glow');
                 showFloatingText(x, y-40, `🔥 COMBO x${comboStreak}! +${4+bonus}`, "win");
-            } else {
-                showFloatingText(x, y, "+4", "win");
-            }
-            
+            } else { showFloatingText(x, y, "+4", "win"); }
             if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             if(mode==='mistake') solvedMistakes.push(q.q);
         } else {
             if(btn) btn.classList.add('wrong'); 
             if(allOptions[q.ans]) allOptions[q.ans].classList.add('correct');
-            
             comboStreak = 0;
             if(document.getElementById('main-q-box')) document.getElementById('main-q-box').classList.remove('combo-glow');
-            score -= 1;
-            wrongCount++;
-            showFloatingText(x, y, "-1", "loss");
-            
+            score -= 1; wrongCount++; showFloatingText(x, y, "-1", "loss");
             if(settings.sound) sfxErr.play();
             if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
             if(mode!=='mistake' && i !== -1) mistakes.push(q);
         }
-
         document.getElementById('curr-score').innerText = score;
         reviewData[curr] = { q: q.q, opts: q.opts, ans: q.ans, user_ans: i };
         renderPalette(); 
-        
         document.getElementById('skip-btn').style.display = 'none';
         document.getElementById('next-btn').style.display = 'block';
     }
     
     function nextQuestion() {
         curr++;
-        while(curr < questions.length && reviewData[curr] && reviewData[curr].user_ans !== null) {
-            curr++;
-        }
+        while(curr < questions.length && reviewData[curr] && reviewData[curr].user_ans !== null) curr++;
         loadQ();
     }
 
     function skipQuestion() {
-        clearInterval(tInt); 
-        comboStreak = 0; 
+        clearInterval(tInt); comboStreak = 0; 
         if(document.getElementById('main-q-box')) document.getElementById('main-q-box').classList.remove('combo-glow');
-        
         let q = questions[curr];
         reviewData[curr] = { q: q.q, opts: q.opts, ans: q.ans, user_ans: -1 };
-        
-        curr++;
-        loadQ();
+        curr++; loadQ();
     }
     
     function finishQuiz() {
-        clearInterval(tInt);
-        endTime = new Date();
+        clearInterval(tInt); endTime = new Date();
         let duration = Math.round((endTime - startTime) / 1000);
-        
         let attempted = 0;
         reviewData.forEach((r, i) => { 
             if(!r || r.user_ans === null) reviewData[i] = { q: questions[i].q, opts: questions[i].opts, ans: questions[i].ans, user_ans: -1 };
@@ -1024,7 +958,6 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
 
         let correct = attempted - wrongCount;
         let acc = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
-
         switchTheme('home');
         document.getElementById('game-screen').style.display='none';
         document.getElementById('result-screen').style.display='flex';
@@ -1033,38 +966,26 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         document.getElementById('res-wrong').innerText = wrongCount;
         document.getElementById('res-time').innerText = duration + "s";
         document.getElementById('res-total').innerText = questions.length;
-        selChaps = []; 
-        sync(score);
+        selChaps = []; sync(score);
     }
 
-    // ==========================================
-    // 🏆 LEADERBOARD & OTHERS
-    // ==========================================
     function loadLb(filter, btn) {
         if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
         document.getElementById('lb-list').innerHTML = '<div style="text-align:center; color:#555;">Fetching ranks...</div>';
         document.getElementById('podium-area').innerHTML = ''; 
-
         fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
-            let list = document.getElementById('lb-list'); 
-            let podium = document.getElementById('podium-area');
+            let list = document.getElementById('lb-list'); let podium = document.getElementById('podium-area');
             list.innerHTML=''; podium.innerHTML='';
-    
-            let top3 = d.top.slice(0, 3);
-            let rest = d.top.slice(3);
-
+            let top3 = d.top.slice(0, 3); let rest = d.top.slice(3);
             let html = '';
             const makeCard = (u, rank) => {
-                if(!u) return ''; 
-                let pic = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; 
+                if(!u) return ''; let pic = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; 
                 return `<div class="podium-item rank-${rank}-box">${rank === 1 ? '<div class="crown">👑</div>' : ''}<div class="p-avatar-box"><img class="p-img" src="${pic}"><div class="p-badge">${rank}</div></div><div class="p-name">${u.name}</div><div class="p-score">${u.score}</div></div>`;
             };
-            
             if(top3[1]) html += makeCard(top3[1], 2);
             if(top3[0]) html += makeCard(top3[0], 1);
             if(top3[2]) html += makeCard(top3[2], 3);
             podium.innerHTML = html;
-
             rest.forEach(u => {
                 let div = document.createElement('div'); div.className = `rank-card`; div.style.color = '#aaa';
                 div.innerHTML = `<span style="font-weight:600; width:30px;">#${u.rank}</span><span style="flex:1; margin-left:10px;">${u.name}</span><span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
@@ -1075,28 +996,20 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     }
 
     function saveSet() { 
-        settings.sound = document.getElementById('tog-sound').checked; 
-        settings.vib = document.getElementById('tog-vib').checked; 
+        settings.sound = document.getElementById('tog-sound').checked; settings.vib = document.getElementById('tog-vib').checked; 
         localStorage.setItem('jjk_set', JSON.stringify(settings)); 
     }
-
     function deleteItem(target) {
         if(!confirm(`Delete "${target}"?`)) return;
         fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
     }
 
     // ============================
-        // ============================
     // ⚔️ BATTLE LOGIC (SocketIO)
     // ============================
     const socket = io();
-    let currentRoom = null;
-    let isHost = false;
-    let battleScore = 0;
-    window.isBattleMode = false;
-    let bTimer;
-    let timeLeft = 30;
-    let battleTimeLimit = 30;
+    let currentRoom = null; let isHost = false; let battleScore = 0; window.isBattleMode = false;
+    let bTimer; let timeLeft = 30; let battleTimeLimit = 30;
 
     socket.on('connect', () => {
         let params = tg.initDataUnsafe.start_param;
@@ -1112,10 +1025,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         document.getElementById('battle-choice-screen').style.display='flex';
     }
 
-    function initCreateRoom() {
-        window.isBattleMode = true;
-        nav(['Allen']); // Allen folder me bhejo selection ke liye
-    }
+    function initCreateRoom() { window.isBattleMode = true; nav(['Allen']); }
 
     function initJoinRoom() {
         window.isBattleMode = false;
@@ -1130,8 +1040,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     }
 
     socket.on('room_created', (data) => {
-        currentRoom = data.room_id;
-        isHost = true;
+        currentRoom = data.room_id; isHost = true;
         document.getElementById('room-code-display').innerText = currentRoom;
         document.getElementById('room-code-display').style.color = "var(--primary)";
         document.getElementById('room-desc').innerText = "Share this code with your opponent";
@@ -1151,23 +1060,13 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
             if(settings.vib) tg.HapticFeedback.notificationOccurred('success');
             document.getElementById('lobby-status').innerHTML = `
                 <div style="color:var(--primary); font-size:1.4rem; font-weight:bold;">${data.p1} <span style="color:#aaa; font-size:1rem;">VS</span> ${data.p2}</div>
-                ${isHost ? `
-                    <button onclick="kickPlayer()" style="background:var(--danger); color:white; margin-top:15px; padding:10px; width:100%; border-radius:10px; font-weight:bold;">👢 KICK PLAYER</button>
-                    <button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:10px; padding:15px; width:100%; border-radius:10px; font-weight:bold; font-size:1.1rem; box-shadow:0 0 15px rgba(255,215,0,0.5);">🚀 START MATCH</button>
-                ` : '<div style="margin-top:20px; color:var(--primary); font-weight:bold;">⏳ Waiting for Host to Start...</div>'}
+                ${isHost ? `<button onclick="kickPlayer()" style="background:var(--danger); color:white; margin-top:15px; padding:10px; width:100%; border-radius:10px; font-weight:bold;">👢 KICK PLAYER</button><button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:10px; padding:15px; width:100%; border-radius:10px; font-weight:bold; font-size:1.1rem; box-shadow:0 0 15px rgba(255,215,0,0.5);">🚀 START MATCH</button>` : '<div style="margin-top:20px; color:var(--primary); font-weight:bold;">⏳ Waiting for Host to Start...</div>'}
             `;
             document.getElementById('join-area').style.display = 'none';
-        } else {
-            document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>';
-        }
+        } else { document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>'; }
     });
 
-    socket.on('kicked', (data) => {
-        tg.showAlert(data.msg);
-        currentRoom = null; isHost = false;
-        tab('home');
-    });
-
+    socket.on('kicked', (data) => { tg.showAlert(data.msg); currentRoom = null; isHost = false; tab('home'); });
     socket.on('error', (data) => { tg.showAlert(data.msg); });
 
     function kickPlayer() { socket.emit('kick_player', {room_id: currentRoom, uid: user.id}); }
@@ -1181,11 +1080,9 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     socket.on('game_started', (data) => {
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('battle-screen').style.display='flex';
-        window.battleQs = data.questions;
-        battleTimeLimit = data.timer;
+        window.battleQs = data.questions; battleTimeLimit = data.timer;
         window.bCurr = 0; battleScore = 0;
-        document.getElementById('p1-score').innerText = '0';
-        document.getElementById('p2-score').innerText = '0';
+        document.getElementById('p1-score').innerText = '0'; document.getElementById('p2-score').innerText = '0';
         loadBattleQ();
     });
 
@@ -1251,7 +1148,6 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         document.getElementById('p2-score').innerText = oppScore;
     });
 
-
     function showBattleResult() {
         let myFinal = parseInt(document.getElementById('p1-score').innerText);
         let oppFinal = parseInt(document.getElementById('p2-score').innerText);
@@ -1270,12 +1166,6 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         } else { 
             title.innerText = "🤝 DRAW!"; title.style.color = "white"; 
         }
-    }
-
-    function endBattle() {
-        tg.showAlert(`Game Over! Final Score: ${battleScore}`);
-        socket.emit('game_over', {room_id: currentRoom});
-        tab('home');
     }
 
     // ============================
@@ -1347,6 +1237,8 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         });
     }
     </script>
+</body>
+
 
                                 
 
