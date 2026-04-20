@@ -551,8 +551,18 @@
         <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
         
         <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
-    </div> <div id="review-screen" class="screen">
+    </div> 
+      
+        <div id="review-screen" class="screen">
         <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">REVIEW ROOM</h2>
+        
+        <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:15px; padding:5px; margin-bottom:15px; border:1px solid #222;">
+            <div class="lb-tab active" onclick="filterReview('all', this)">All</div>
+            <div class="lb-tab" onclick="filterReview('correct', this)">Correct</div>
+            <div class="lb-tab" onclick="filterReview('incorrect', this)">Incorrect</div>
+            <div class="lb-tab" onclick="filterReview('skipped', this)">Skipped</div>
+        </div>
+
         <div id="review-list" style="overflow-y:auto; flex:1; margin-bottom:15px; padding-right:5px;"></div>
         <button onclick="document.getElementById('review-screen').style.display='none'; document.getElementById('result-screen').style.display='flex';" class="stop-btn" style="border-color:#444; color:#aaa;">🔙 BACK TO RESULT</button>
     </div>
@@ -1165,19 +1175,57 @@ function endBattle() {
     goHome();
 }
 
+            // 1. Main Function (Jab Review button click ho)
         function showReview() {
             document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
             document.getElementById('review-screen').style.display='flex';
+            
+            // Default "All" tab ko active karna
+            let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            if(tabs[0]) tabs[0].classList.add('active');
+
+            renderReviewData('all');
+        }
+
+        // 2. Filter Tab Click Logic
+        function filterReview(type, btn) {
+            let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            renderReviewData(type);
+        }
+
+        // 3. Data Render Logic (Jo category ke hisab se data filter karega)
+        function renderReviewData(filterType) {
             let list = document.getElementById('review-list');
             list.innerHTML = '';
             
-            reviewData.forEach((item, index) => {
+            // Logic to filter array based on user's selection
+            let filteredData = reviewData.filter(item => {
+                if (filterType === 'all') return true;
+                if (filterType === 'correct') return item.user_ans === item.ans;
+                if (filterType === 'skipped') return item.user_ans === -1;
+                if (filterType === 'incorrect') return item.user_ans !== item.ans && item.user_ans !== -1;
+                return true;
+            });
+
+            if(filteredData.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#666; margin-top:20px;">No questions found in this category!</div>';
+                return;
+            }
+            
+            filteredData.forEach((item) => {
                 let div = document.createElement('div');
                 div.className = 'q-container';
                 div.style.marginBottom = '15px';
                 div.style.padding = '15px';
                 
-                let html = `<div style="font-weight:bold; margin-bottom:10px; font-size:0.95rem;">Q${index+1}: ${item.q}</div>`;
+                // Original question number maintain rakhne ke liye
+                let originalIndex = reviewData.indexOf(item) + 1;
+                
+                let html = `<div style="font-weight:bold; margin-bottom:10px; font-size:0.95rem;">Q${originalIndex}: ${item.q}</div>`;
                 
                 item.opts.forEach((opt, optIdx) => {
                     let color = '#ddd';
@@ -1193,10 +1241,17 @@ function endBattle() {
                     html += `<div style="padding:10px; margin-bottom:5px; border-radius:8px; background:${bg}; border:${border}; color:${color}; font-size:0.85rem;">${opt}</div>`;
                 });
                 
+                // Agar skipped hai toh alag se ek alert dikha denge
+                if(item.user_ans === -1) {
+                    html += `<div style="margin-top:10px; color:var(--gold); font-size:0.8rem; font-weight:bold; text-align:center;">⚠️ SKIPPED (Time Out)</div>`;
+                }
+
                 div.innerHTML = html;
                 list.appendChild(div);
             });
         }
+
+        
 // ❌ UPAR KI EXTRA "}" WALI LINE DELETE KAR DI GAYI HAI
 
 </script>
