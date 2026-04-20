@@ -337,7 +337,6 @@
     </style>
 </head>
 
-    
 <body id="body">
 
     <div id="door-overlay" class="door-overlay">
@@ -369,60 +368,10 @@
             </div>
         </div>
 
-       <div id="battle-screen" class="screen">
-    <div id="battle-timer-bar" style="width:100%; height:5px; background:var(--gold); margin-bottom:10px; transition: 0.5s;"></div>
-    
-    <div class="vs-bar">
-        <div class="p-card" style="border:1px solid var(--primary);">
-            <div id="p1-name-tag">You</div>
-            <div id="p1-score" class="p-score-live">0</div>
-        </div>
-        <div style="font-size:1.5rem; padding-top:15px;">VS</div>
-        <div class="p-card" style="border:1px solid var(--danger);">
-            <div id="p2-name-tag">Opponent</div>
-            <div id="p2-score" class="p-score-live">0</div>
-        </div>
-    </div>
-
-    <div id="battle-q-area">
-        <div class="q-container"><div id="battle-q-txt">Loading Battle...</div></div>
-        <div id="battle-opts"></div>
-    </div>
-
-    <div id="waiting-msg" style="display:none; text-align:center; margin-top:50px;" class="waiting-anim">
-        <div style="font-size:2rem;">⏳</div>
-        <div>Waiting for opponent's answer...</div>
-    </div>
-</div>
-
-<div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
-    <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
-    
-    <div class="glass-box" style="padding:25px; margin-bottom:30px;">
-        <div style="display:flex; justify-content:space-around; align-items:center;">
-            <div>
-                <div style="color:#aaa; font-size:0.8rem;">YOUR XP</div>
-                <div id="final-my-score" style="font-size:2.5rem; font-weight:bold; color:var(--primary);">0</div>
-            </div>
-            <div style="font-size:1.5rem; color:#444;">VS</div>
-            <div>
-                <div style="color:#aaa; font-size:0.8rem;">OPPONENT</div>
-                <div id="final-opp-score" style="font-size:2.5rem; font-weight:bold; color:var(--danger);">0</div>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="openBattleLobby()" style="width:100%; padding:18px; background:var(--primary); color:black; border:none; border-radius:15px; font-weight:800; font-family:'Orbitron'; margin-bottom:15px;">REMATCH ⚔️</button>
-    <button onclick="goHome()" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:15px; color:#aaa; font-weight:600;">EXIT ARENA</button>
-</div>
-
-
-        
         <div class="allen-btn" onclick="openBattleLobby()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
-    <div class="allen-text" style="color:var(--gold);">1 v 1 BATTLE</div>
-    <div style="font-size:0.8rem; color:#888;">CHALLENGE FRIEND</div>
-</div>
-
+            <div class="allen-text" style="color:var(--gold);">1 v 1 BATTLE</div>
+            <div style="font-size:0.8rem; color:#888;">CHALLENGE FRIEND</div>
+        </div>
 
         <div class="glass-box" id="curse-box" style="display:none; border:1px solid var(--danger); text-align:center; cursor:pointer; margin-top:30px;" onclick="startMistakes()">
             <div style="color:var(--danger); font-family:'Orbitron'; font-size:1rem;">🚨 WEAK SPOTS FOUND</div>
@@ -445,28 +394,63 @@
         <div id="lb-list"></div>
     </div>
 
-     <div id="lobby-screen" class="screen">
-    <h2 style="text-align:center; color:var(--gold);">⚔️ BATTLE ARENA</h2>
-    <div class="glass-box" style="text-align:center; padding:30px;">
-        <div id="lobby-status">Connecting...</div>
-        <h1 id="room-code-display" style="font-size:3rem; margin:10px 0; letter-spacing:5px;">----</h1>
-        <p style="color:#aaa;">Share this code with your friend</p>
-        <button onclick="shareRoomLink()" style="background:#0088cc; margin-top:10px;">📤 Send on Telegram</button>
+    <div id="lobby-screen" class="screen">
+        <h2 style="text-align:center; color:var(--gold);">⚔️ BATTLE ARENA</h2>
+        <div class="glass-box" style="text-align:center; padding:30px;">
+            <div id="lobby-status">Connecting...</div>
+            <h1 id="room-code-display" style="font-size:3rem; margin:10px 0; letter-spacing:5px;">----</h1>
+            <p style="color:#aaa;">Share this code with your friend</p>
+            <button onclick="shareRoomLink()" style="background:#0088cc; margin-top:10px;">📤 Send on Telegram</button>
+        </div>
+        <div class="glass-box" style="margin-top:20px;">
+            <input type="text" id="join-code-input" placeholder="Enter Friend's Code" style="text-align:center; letter-spacing:3px;">
+            <button onclick="joinRoomManual()" style="background:var(--primary); color:black;">JOIN ROOM</button>
+        </div>
+        <button onclick="tab('home')" class="stop-btn" style="border-color:#444; color:#aaa;">CANCEL</button>
     </div>
-    
-    <div class="glass-box" style="margin-top:20px;">
-        <input type="text" id="join-code-input" placeholder="Enter Friend's Code" style="text-align:center; letter-spacing:3px;">
-        <button onclick="joinRoomManual()" style="background:var(--primary); color:black;">JOIN ROOM</button>
+
+    <div id="battle-screen" class="screen">
+        <div id="battle-timer-bar" style="width:100%; height:5px; background:var(--gold); margin-bottom:10px; transition: 0.5s;"></div>
+        <div class="vs-bar">
+            <div class="p-card" style="border:1px solid var(--primary);">
+                <div id="p1-name-tag">You</div>
+                <div id="p1-score" class="p-score-live">0</div>
+            </div>
+            <div style="font-size:1.5rem; padding-top:15px;">VS</div>
+            <div class="p-card" style="border:1px solid var(--danger);">
+                <div id="p2-name-tag">Opponent</div>
+                <div id="p2-score" class="p-score-live">0</div>
+            </div>
+        </div>
+        <div id="battle-q-area">
+            <div class="q-container"><div id="battle-q-txt">Loading Battle...</div></div>
+            <div id="battle-opts"></div>
+        </div>
+        <div id="waiting-msg" style="display:none; text-align:center; margin-top:50px;" class="waiting-anim">
+            <div style="font-size:2rem;">⏳</div>
+            <div>Waiting for opponent's answer...</div>
+        </div>
     </div>
-    <button onclick="goHome()" class="stop-btn" style="border-color:#444; color:#aaa;">CANCEL</button>
-</div>
 
-    <button onclick="goHome()" class="stop-btn" style="border-color:#444; color:#aaa;">CANCEL</button>
-</div> <div id="profile-screen" class="screen">
-    <h2 style="text-align:center; font-family:'Orbitron'; color:var(--primary);">SETTINGS</h2>
+    <div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
+        <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
+        <div class="glass-box" style="padding:25px; margin-bottom:30px;">
+            <div style="display:flex; justify-content:space-around; align-items:center;">
+                <div>
+                    <div style="color:#aaa; font-size:0.8rem;">YOUR XP</div>
+                    <div id="final-my-score" style="font-size:2.5rem; font-weight:bold; color:var(--primary);">0</div>
+                </div>
+                <div style="font-size:1.5rem; color:#444;">VS</div>
+                <div>
+                    <div style="color:#aaa; font-size:0.8rem;">OPPONENT</div>
+                    <div id="final-opp-score" style="font-size:2.5rem; font-weight:bold; color:var(--danger);">0</div>
+                </div>
+            </div>
+        </div>
+        <button onclick="openBattleLobby()" style="width:100%; padding:18px; background:var(--primary); color:black; border:none; border-radius:15px; font-weight:800; font-family:'Orbitron'; margin-bottom:15px;">REMATCH ⚔️</button>
+        <button onclick="tab('home')" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:15px; color:#aaa; font-weight:600;">EXIT ARENA</button>
+    </div>
 
-
-    
     <div id="profile-screen" class="screen">
         <h2 style="text-align:center; font-family:'Orbitron'; color:var(--primary);">SETTINGS</h2>
         <div class="glass-box">
@@ -510,29 +494,23 @@
             <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
             <div style="color:var(--primary); font-family:'Orbitron'; font-size:1.1rem;">XP: <span id="curr-score">0</span></div>
         </div>
-        
         <div class="q-container">
             <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
         </div>
         <div id="opts" style="z-index:2; position:relative;"></div>
-
-                <div style="display:flex; gap:10px; margin-top:15px; z-index:2; position:relative;">
+        <div style="display:flex; gap:10px; margin-top:15px; z-index:2; position:relative;">
             <button id="skip-btn" onclick="skipQuestion()" style="flex:1; padding:15px; background:transparent; border:1px solid #666; color:#aaa; border-radius:12px; font-family:'Orbitron'; font-weight:bold;">⏭️ SKIP</button>
             <button id="next-btn" onclick="nextQuestion()" style="flex:1; padding:15px; background:var(--primary); border:none; color:#000; border-radius:12px; font-family:'Orbitron'; font-weight:bold; display:none;">NEXT ➡️</button>
         </div>
-
         <div class="stop-btn" onclick="finishQuiz()" style="margin-top:10px; z-index:2; position:relative;">🛑 STOP & SUBMIT</div>
+    </div>
 
-    
     <div id="result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 style="color:var(--primary); font-family:'Orbitron'; letter-spacing:2px;">RESULT</h2>
         <div style="font-size:4rem; font-weight:800; font-family:'Orbitron'; margin:10px 0; text-shadow:0 0 30px rgba(74,222,128,0.3);" id="final-score">0</div>
         <div style="color:#aaa; font-size:0.9rem; margin-bottom:30px;">XP GAINED</div>
 
-        
-
-
-               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%;">
             <div class="glass-box" style="padding:15px;"><div style="color:var(--primary); font-size:1.5rem; font-family:'Orbitron';" id="res-acc">0%</div><div style="font-size:0.75rem; color:#888;">Accuracy</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:var(--danger); font-size:1.5rem; font-family:'Orbitron';" id="res-wrong">0</div><div style="font-size:0.75rem; color:#888;">Mistakes</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-time">0s</div><div style="font-size:0.75rem; color:#888;">Time Taken</div></div>
@@ -540,31 +518,19 @@
         </div>
 
         <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
-        
-        <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
+        <button onclick="tab('home')" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
     </div> 
       
-        <div id="review-screen" class="screen">
+    <div id="review-screen" class="screen">
         <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">REVIEW ROOM</h2>
-        
         <div style="display:flex; background:rgba(255,255,255,0.03); border-radius:15px; padding:5px; margin-bottom:15px; border:1px solid #222;">
             <div class="lb-tab active" onclick="filterReview('all', this)">All</div>
             <div class="lb-tab" onclick="filterReview('correct', this)">Correct</div>
             <div class="lb-tab" onclick="filterReview('incorrect', this)">Incorrect</div>
             <div class="lb-tab" onclick="filterReview('skipped', this)">Skipped</div>
         </div>
-
         <div id="review-list" style="overflow-y:auto; flex:1; margin-bottom:15px; padding-right:5px;"></div>
         <button onclick="document.getElementById('review-screen').style.display='none'; document.getElementById('result-screen').style.display='flex';" class="stop-btn" style="border-color:#444; color:#aaa;">🔙 BACK TO RESULT</button>
-    </div>
-
-
-
-        
-
-      <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
-        
-        <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
     </div>
 
     <div class="dock-container">
@@ -572,6 +538,16 @@
         <div class="dock-item" onclick="switchTheme('home'); tab('lb', this)">🏆</div>
         <div class="dock-item" onclick="switchTheme('prof'); tab('profile', this)">👤</div>
     </div>
+
+    ```
+
+**(Bonus Fix maine khud hi add kar diya hai):** Tumhare "Cancel/Home" buttons `goHome()` function ko dhoondh rahe the jo JavaScript me exist nahi karta tha, usko maine clean tarike se `tab('home')` karke fix kar diya hai.
+
+Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy karo! 🔥
+
+    
+
+        
 
     <script>
         const tg = window.Telegram.WebApp;
