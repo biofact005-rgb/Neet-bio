@@ -397,10 +397,11 @@
             </div>
         </div>
 
-        <div class="allen-btn" onclick="openBattleLobby()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
+                <div class="allen-btn" onclick="openBattleChoice()" style="margin-top:15px; background:linear-gradient(160deg, #2e0f0f, #0a0202); border-color:var(--gold);">
             <div class="allen-text" style="color:var(--gold);">1 v 1 BATTLE</div>
             <div style="font-size:0.8rem; color:#888;">CHALLENGE FRIEND</div>
-        </div>
+                </div>
+        
 
         <div class="glass-box" id="curse-box" style="display:none; border:1px solid var(--danger); text-align:center; cursor:pointer; margin-top:30px;" onclick="startMistakes()">
             <div style="color:var(--danger); font-family:'Orbitron'; font-size:1rem;">🚨 WEAK SPOTS FOUND</div>
@@ -422,15 +423,35 @@
         <div id="podium-area" class="podium-box"></div>   
         <div id="lb-list"></div>
     </div>
+    <div id="battle-choice-screen" class="screen" style="justify-content:center; align-items:center;">
+        <h2 style="color:var(--gold); font-family:'Orbitron'; font-size:2rem; margin-bottom:30px;">⚔️ ARENA</h2>
+        <div style="width:100%; display:flex; flex-direction:column; gap:15px;">
+            <button onclick="initCreateRoom()" style="padding:20px; background:var(--primary); color:black; font-family:'Orbitron'; font-size:1.2rem; border-radius:15px; border:none; font-weight:bold; box-shadow:0 0 15px rgba(74,222,128,0.4);">➕ CREATE ROOM</button>
+            <div style="text-align:center; color:#666; font-weight:bold;">OR</div>
+            <button onclick="initJoinRoom()" style="padding:20px; background:transparent; border:2px solid var(--primary); color:var(--primary); font-family:'Orbitron'; font-size:1.2rem; border-radius:15px; font-weight:bold;">🤝 JOIN ROOM</button>
+            <button onclick="tab('home')" style="margin-top:20px; padding:15px; background:transparent; border:1px solid #444; color:#aaa; border-radius:15px;">CANCEL</button>
+        </div>
+    </div>
 
     <div id="lobby-screen" class="screen">
-        <h2 style="text-align:center; color:var(--gold);">⚔️ BATTLE ARENA</h2>
+        <h2 style="text-align:center; color:var(--gold);">⚔️ LOBBY</h2>
+        
         <div class="glass-box" style="text-align:center; padding:30px;">
             <div id="lobby-status">Connecting...</div>
-            <h1 id="room-code-display" style="font-size:3rem; margin:10px 0; letter-spacing:5px;">----</h1>
-            <p style="color:#aaa;">Share this code with your friend</p>
-            <button onclick="shareRoomLink()" style="background:#0088cc; margin-top:10px;">📤 Send on Telegram</button>
+            <h1 id="room-code-display" style="font-size:3.5rem; margin:10px 0; letter-spacing:5px; color:var(--primary);">----</h1>
+            <p id="room-desc" style="color:#aaa;">Share this code with your friend</p>
+            <button id="share-btn-lobby" onclick="shareRoomLink()" style="background:#0088cc; margin-top:10px; border-radius:10px; display:none;">📤 Share on Telegram</button>
         </div>
+        
+        <div id="join-area" class="glass-box" style="margin-top:20px; display:none; text-align:center;">
+            <input type="text" id="join-code-input" placeholder="ENTER 5 DIGIT CODE" style="text-align:center; letter-spacing:3px; font-size:1.2rem; text-transform:uppercase; padding:10px; border-radius:10px; border:1px solid #444; background:#111; color:white; width:80%;" maxlength="5">
+            <button onclick="joinRoomManual()" style="background:var(--primary); color:black; margin-top:15px; padding:15px; width:100%; border-radius:10px; font-weight:bold; font-family:'Orbitron';">JOIN MATCH</button>
+        </div>
+
+        <button onclick="leaveLobby()" class="stop-btn" style="border-color:#444; color:#aaa; margin-top:20px;">LEAVE LOBBY</button>
+    </div>
+
+    
         <div class="glass-box" style="margin-top:20px;">
             <input type="text" id="join-code-input" placeholder="Enter Friend's Code" style="text-align:center; letter-spacing:3px;">
             <button onclick="joinRoomManual()" style="background:var(--primary); color:black;">JOIN ROOM</button>
@@ -791,7 +812,19 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         questions = questions.slice(0, limit);
         if(questions.length===0) return tg.showAlert("No Questions!");
         
+                // BATTLE MODE INTERCEPTOR
+        if(window.isBattleMode) {
+            socket.emit('create_room', {uid: user.id, name: user.first_name, questions: questions, timer: tm});
+            window.isBattleMode = false;
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('lobby-screen').style.display='flex';
+            document.getElementById('join-area').style.display = 'none';
+            document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Creating Arena...</div>';
+            return;
+        }
+
         mode='normal'; window.quizTimerStart = tm; startEngine();
+        
     }
 
     function startMistakes() {
@@ -1053,48 +1086,58 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     }
 
     // ============================
+        // ============================
     // ⚔️ BATTLE LOGIC (SocketIO)
     // ============================
-    
-        // ============================
-// ⚔️ BATTLE LOGIC (Client)
-// ============================
-const socket = io();
-let currentRoom = null;
-let isHost = false;
-let battleScore = 0;
+    const socket = io();
+    let currentRoom = null;
+    let isHost = false;
+    let battleScore = 0;
+    window.isBattleMode = false;
+    let bTimer;
+    let timeLeft = 30;
+    let battleTimeLimit = 30;
 
-// 1. Initial Check for Deep Link (join_CODE) - UPDATED FIX
-socket.on('connect', () => {
-    let params = tg.initDataUnsafe.start_param;
-    if(params && params.startsWith('join_') && !currentRoom) {
-        let code = params.split('_')[1];
-        openBattleLobby();
-        document.getElementById('join-code-input').value = code;
-        joinRoomManual(); 
+    socket.on('connect', () => {
+        let params = tg.initDataUnsafe.start_param;
+        if(params && params.startsWith('join_') && !currentRoom) {
+            initJoinRoom();
+            document.getElementById('join-code-input').value = params.split('_')[1];
+            joinRoomManual(); 
+        }
+    });
+
+    function openBattleChoice() {
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('battle-choice-screen').style.display='flex';
     }
-});
 
-    
+    function initCreateRoom() {
+        window.isBattleMode = true;
+        nav(['Allen']); // Allen folder me bhejo selection ke liye
+    }
 
-    function openBattleLobby() {
-        switchTheme('prof'); 
+    function initJoinRoom() {
+        window.isBattleMode = false;
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('lobby-screen').style.display='flex';
-        if(!currentRoom) { socket.emit('create_room', {uid: user.id, name: user.first_name}); }
+        document.getElementById('join-area').style.display = 'block';
+        document.getElementById('room-code-display').innerText = "JOIN";
+        document.getElementById('room-code-display').style.color = "#aaa";
+        document.getElementById('room-desc').innerText = "Enter room code below";
+        document.getElementById('lobby-status').innerHTML = "Ready to fight!";
+        document.getElementById('share-btn-lobby').style.display = 'none';
     }
 
     socket.on('room_created', (data) => {
         currentRoom = data.room_id;
         isHost = true;
         document.getElementById('room-code-display').innerText = currentRoom;
+        document.getElementById('room-code-display').style.color = "var(--primary)";
+        document.getElementById('room-desc').innerText = "Share this code with your opponent";
+        document.getElementById('share-btn-lobby').style.display = 'inline-block';
         document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>';
     });
-
-    function shareRoomLink() {
-        let link = `https://t.me/Neet2026quiiz_bot/Neet2026quiiz?startapp=join_${currentRoom}`;
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Challenge me in NEET Battle! Code: ${currentRoom}`);
-    }
 
     function joinRoomManual() {
         let code = document.getElementById('join-code-input').value.toUpperCase();
@@ -1103,43 +1146,59 @@ socket.on('connect', () => {
     }
 
     socket.on('player_joined', (data) => {
-        currentRoom = document.getElementById('join-code-input').value || currentRoom;
-        tg.showAlert(`${data.p2} Joined!`);
-        document.getElementById('lobby-status').innerHTML = `
-            <div style="color:var(--primary); font-size:1.2rem;">${data.p1} VS ${data.p2}</div>
-            ${isHost ? '<button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:20px; padding:15px; width:100%; border-radius:10px; font-weight:bold;">START MATCH 🚀</button>' : '<div style="margin-top:20px;">Waiting for Host to Start...</div>'}
-        `;
+        currentRoom = document.getElementById('join-code-input').value.toUpperCase() || currentRoom;
+        if(data.p2) {
+            if(settings.vib) tg.HapticFeedback.notificationOccurred('success');
+            document.getElementById('lobby-status').innerHTML = `
+                <div style="color:var(--primary); font-size:1.4rem; font-weight:bold;">${data.p1} <span style="color:#aaa; font-size:1rem;">VS</span> ${data.p2}</div>
+                ${isHost ? `
+                    <button onclick="kickPlayer()" style="background:var(--danger); color:white; margin-top:15px; padding:10px; width:100%; border-radius:10px; font-weight:bold;">👢 KICK PLAYER</button>
+                    <button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:10px; padding:15px; width:100%; border-radius:10px; font-weight:bold; font-size:1.1rem; box-shadow:0 0 15px rgba(255,215,0,0.5);">🚀 START MATCH</button>
+                ` : '<div style="margin-top:20px; color:var(--primary); font-weight:bold;">⏳ Waiting for Host to Start...</div>'}
+            `;
+            document.getElementById('join-area').style.display = 'none';
+        } else {
+            document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>';
+        }
     });
 
+    socket.on('kicked', (data) => {
+        tg.showAlert(data.msg);
+        currentRoom = null; isHost = false;
+        tab('home');
+    });
+
+    socket.on('error', (data) => { tg.showAlert(data.msg); });
+
+    function kickPlayer() { socket.emit('kick_player', {room_id: currentRoom, uid: user.id}); }
     function startBattle() { socket.emit('start_game', {room_id: currentRoom}); }
+    function leaveLobby() { currentRoom = null; isHost = false; window.isBattleMode = false; tab('home'); }
+    function shareRoomLink() {
+        let link = `https://t.me/Neet2026quiiz_bot/Neet2026quiiz?startapp=join_${currentRoom}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Challenge me in NEET Battle! Code: ${currentRoom}`);
+    }
 
     socket.on('game_started', (data) => {
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('battle-screen').style.display='flex';
         window.battleQs = data.questions;
-        window.bCurr = 0;
-        battleScore = 0;
+        battleTimeLimit = data.timer;
+        window.bCurr = 0; battleScore = 0;
+        document.getElementById('p1-score').innerText = '0';
+        document.getElementById('p2-score').innerText = '0';
         loadBattleQ();
     });
 
-    let bTimer;
-    let timeLeft = 30;
-
     function updateTimerBar() {
-        let width = (timeLeft / 30) * 100;
+        let width = (timeLeft / battleTimeLimit) * 100;
         document.getElementById('battle-timer-bar').style.width = width + "%";
     }
 
-        function loadBattleQ() {
+    function loadBattleQ() {
         if(window.bCurr >= window.battleQs.length) return showBattleResult();
-        
-        timeLeft = 30;
-        updateTimerBar();
-        
-        // Hamesha Question dikhao aur Waiting message hatao (Yahi Fix hai loading bug ka)
-        document.getElementById('battle-q-area').style.display = 'block';
+        timeLeft = battleTimeLimit; updateTimerBar();
         document.getElementById('waiting-msg').style.display = 'none';
-        document.getElementById('battle-opts').style.display = 'block';
+        document.getElementById('battle-q-area').style.display = 'block';
         
         let q = window.battleQs[window.bCurr];
         document.getElementById('battle-q-txt').innerText = `Q${window.bCurr+1}: ${q.q}`;
@@ -1153,52 +1212,43 @@ socket.on('connect', () => {
 
         clearInterval(bTimer);
         bTimer = setInterval(() => {
-            timeLeft--;
-            updateTimerBar();
-            if(timeLeft <= 0) {
-                clearInterval(bTimer);
-                submitBattleAns(-1, q.ans, null); 
-            }
+            timeLeft--; updateTimerBar();
+            if(timeLeft <= 0) { clearInterval(bTimer); submitBattleAns(-1, q.ans, null); }
         }, 1000);
     }
 
     function submitBattleAns(idx, correctIdx, btn, e) {
         clearInterval(bTimer); 
         let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
-        allBtns.forEach(b => b.onclick = null); // Saare buttons disable karo
+        allBtns.forEach(b => b.onclick = null); 
         
-        let x = e ? e.clientX : window.innerWidth / 2;
-        let y = e ? e.clientY : window.innerHeight / 2;
+        let x = e ? e.clientX : window.innerWidth / 2; let y = e ? e.clientY : window.innerHeight / 2;
 
         if(idx !== -1) {
             if(idx === correctIdx) {
                 if(btn) btn.classList.add('correct');
-                battleScore += 4;
-                showFloatingText(x, y, "+4", "win");
+                battleScore += 4; showFloatingText(x, y, "+4", "win");
             } else {
                 if(btn) btn.classList.add('wrong');
                 if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
-                battleScore -= 1;
-                showFloatingText(x, y, "-1", "loss");
+                battleScore -= 1; showFloatingText(x, y, "-1", "loss");
             }
         } else {
-            // Time out hone par sahi option dikha do
             if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
         }
 
         document.getElementById('p1-score').innerText = battleScore;
         socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
-        
-        // Timeout hataya gaya! Ab screen hide nahi hogi, sirf waiting text aayega
         document.getElementById('waiting-msg').style.display = 'block';
     }
 
-    socket.on('next_question', () => {
-        // 2 Second ka delay, taaki dono players dekh sakein ki sahi ans kya tha
-        setTimeout(() => {
-            window.bCurr++;
-            loadBattleQ();
-        }, 2000); 
+    socket.on('next_question', () => { setTimeout(() => { window.bCurr++; loadBattleQ(); }, 2000); });
+
+    socket.on('opponent_update', (data) => {
+        let myScore = isHost ? data.p1_score : data.p2_score;
+        let oppScore = isHost ? data.p2_score : data.p1_score;
+        document.getElementById('p1-score').innerText = myScore;
+        document.getElementById('p2-score').innerText = oppScore;
     });
 
 
