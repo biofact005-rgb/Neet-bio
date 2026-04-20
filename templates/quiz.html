@@ -438,28 +438,41 @@
         <button onclick="tab('home')" class="stop-btn" style="border-color:#444; color:#aaa;">CANCEL</button>
     </div>
 
+
     <div id="battle-screen" class="screen">
-        <div id="battle-timer-bar" style="width:100%; height:5px; background:var(--gold); margin-bottom:10px; transition: 0.5s;"></div>
-        <div class="vs-bar">
-            <div class="p-card" style="border:1px solid var(--primary);">
-                <div id="p1-name-tag">You</div>
-                <div id="p1-score" class="p-score-live">0</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:rgba(0,0,0,0.4); border-radius:15px; padding:10px; border:1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5);">
+            <div style="display:flex; align-items:center; gap:10px; width:40%;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" id="p1-battle-pic" style="width:40px; height:40px; border-radius:50%; border:2px solid var(--primary);">
+                <div>
+                    <div id="p1-name-tag" style="font-size:0.75rem; color:#aaa; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70px;">You</div>
+                    <div id="p1-score" style="font-family:'Orbitron'; font-size:1.3rem; font-weight:900; color:var(--primary);">0</div>
+                </div>
             </div>
-            <div style="font-size:1.5rem; padding-top:15px;">VS</div>
-            <div class="p-card" style="border:1px solid var(--danger);">
-                <div id="p2-name-tag">Opponent</div>
-                <div id="p2-score" class="p-score-live">0</div>
+            
+            <div style="width:40px; height:40px; background:linear-gradient(45deg, #222, #000); border:2px solid var(--gold); border-radius:50%; display:flex; justify-content:center; align-items:center; font-family:'Orbitron'; font-weight:900; color:var(--gold); font-size:0.85rem; box-shadow:0 0 15px rgba(255,215,0,0.4); z-index:2;">VS</div>
+            
+            <div style="display:flex; align-items:center; gap:10px; width:40%; flex-direction:row-reverse; text-align:right;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:40px; height:40px; border-radius:50%; border:2px solid var(--danger);">
+                <div>
+                    <div id="p2-name-tag" style="font-size:0.75rem; color:#aaa; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70px;">Opponent</div>
+                    <div id="p2-score" style="font-family:'Orbitron'; font-size:1.3rem; font-weight:900; color:var(--danger);">0</div>
+                </div>
             </div>
         </div>
-        <div id="battle-q-area">
-            <div class="q-container"><div id="battle-q-txt">Loading Battle...</div></div>
-            <div id="battle-opts"></div>
+
+        <div id="battle-timer-bar" style="width:100%; height:6px; background:var(--gold); margin-bottom:15px; border-radius:10px; transition:0.5s; box-shadow:0 0 10px rgba(255,215,0,0.5);"></div>
+        
+        <div id="battle-q-area" class="q-container" style="padding:20px;">
+            <div id="battle-q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500;">Loading Battle...</div>
         </div>
-        <div id="waiting-msg" style="display:none; text-align:center; margin-top:50px;" class="waiting-anim">
-            <div style="font-size:2rem;">⏳</div>
-            <div>Waiting for opponent's answer...</div>
+        
+        <div id="battle-opts"></div>
+
+        <div id="waiting-msg" style="display:none; text-align:center; margin-top:20px; color:var(--gold); font-weight:bold; font-size:1.1rem; padding:10px; background:rgba(255,215,0,0.1); border-radius:10px; border:1px solid rgba(255,215,0,0.3);">
+            ⏳ Waiting for opponent...
         </div>
     </div>
+
 
     <div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
@@ -1042,20 +1055,27 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     // ============================
     // ⚔️ BATTLE LOGIC (SocketIO)
     // ============================
-    const socket = io();
-    let currentRoom = null;
-    let isHost = false;
-    let battleScore = 0;
+    
+        // ============================
+// ⚔️ BATTLE LOGIC (Client)
+// ============================
+const socket = io();
+let currentRoom = null;
+let isHost = false;
+let battleScore = 0;
 
-    window.onload = function() {
-        let params = tg.initDataUnsafe.start_param;
-        if(params && params.startsWith('join_')) {
-            let code = params.split('_')[1];
-            openBattleLobby();
-            document.getElementById('join-code-input').value = code;
-            setTimeout(() => joinRoomManual(), 500); 
-        }
-    };
+// 1. Initial Check for Deep Link (join_CODE) - UPDATED FIX
+socket.on('connect', () => {
+    let params = tg.initDataUnsafe.start_param;
+    if(params && params.startsWith('join_') && !currentRoom) {
+        let code = params.split('_')[1];
+        openBattleLobby();
+        document.getElementById('join-code-input').value = code;
+        joinRoomManual(); 
+    }
+});
+
+    
 
     function openBattleLobby() {
         switchTheme('prof'); 
@@ -1110,12 +1130,17 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
         document.getElementById('battle-timer-bar').style.width = width + "%";
     }
 
-    function loadBattleQ() {
+        function loadBattleQ() {
         if(window.bCurr >= window.battleQs.length) return showBattleResult();
+        
         timeLeft = 30;
         updateTimerBar();
-        document.getElementById('waiting-msg').style.display = 'none';
+        
+        // Hamesha Question dikhao aur Waiting message hatao (Yahi Fix hai loading bug ka)
         document.getElementById('battle-q-area').style.display = 'block';
+        document.getElementById('waiting-msg').style.display = 'none';
+        document.getElementById('battle-opts').style.display = 'block';
+        
         let q = window.battleQs[window.bCurr];
         document.getElementById('battle-q-txt').innerText = `Q${window.bCurr+1}: ${q.q}`;
         let opts = document.getElementById('battle-opts'); opts.innerHTML = '';
@@ -1140,7 +1165,7 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
     function submitBattleAns(idx, correctIdx, btn, e) {
         clearInterval(bTimer); 
         let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
-        allBtns.forEach(b => b.onclick = null); 
+        allBtns.forEach(b => b.onclick = null); // Saare buttons disable karo
         
         let x = e ? e.clientX : window.innerWidth / 2;
         let y = e ? e.clientY : window.innerHeight / 2;
@@ -1156,24 +1181,26 @@ Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy k
                 battleScore -= 1;
                 showFloatingText(x, y, "-1", "loss");
             }
+        } else {
+            // Time out hone par sahi option dikha do
+            if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
         }
 
         document.getElementById('p1-score').innerText = battleScore;
         socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
-        setTimeout(() => {
-            document.getElementById('battle-q-area').style.display = 'none';
-            document.getElementById('waiting-msg').style.display = 'block';
-        }, 1000);
+        
+        // Timeout hataya gaya! Ab screen hide nahi hogi, sirf waiting text aayega
+        document.getElementById('waiting-msg').style.display = 'block';
     }
 
-    socket.on('next_question', () => { window.bCurr++; loadBattleQ(); });
-
-    socket.on('opponent_update', (data) => {
-        let myScore = isHost ? data.p1_score : data.p2_score;
-        let oppScore = isHost ? data.p2_score : data.p1_score;
-        document.getElementById('p1-score').innerText = myScore;
-        document.getElementById('p2-score').innerText = oppScore;
+    socket.on('next_question', () => {
+        // 2 Second ka delay, taaki dono players dekh sakein ki sahi ans kya tha
+        setTimeout(() => {
+            window.bCurr++;
+            loadBattleQ();
+        }, 2000); 
     });
+
 
     function showBattleResult() {
         let myFinal = parseInt(document.getElementById('p1-score').innerText);
