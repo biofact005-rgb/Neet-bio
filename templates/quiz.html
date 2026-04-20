@@ -538,18 +538,28 @@
         <div style="font-size:4rem; font-weight:800; font-family:'Orbitron'; margin:10px 0; text-shadow:0 0 30px rgba(74,222,128,0.3);" id="final-score">0</div>
         <div style="color:#aaa; font-size:0.9rem; margin-bottom:30px;">XP GAINED</div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%;">
+        
+
+
+               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; width:100%;">
             <div class="glass-box" style="padding:15px;"><div style="color:var(--primary); font-size:1.5rem; font-family:'Orbitron';" id="res-acc">0%</div><div style="font-size:0.75rem; color:#888;">Accuracy</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:var(--danger); font-size:1.5rem; font-family:'Orbitron';" id="res-wrong">0</div><div style="font-size:0.75rem; color:#888;">Mistakes</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-time">0s</div><div style="font-size:0.75rem; color:#888;">Time Taken</div></div>
             <div class="glass-box" style="padding:15px;"><div style="color:#fff; font-size:1.5rem; font-family:'Orbitron';" id="res-total">0</div><div style="font-size:0.75rem; color:#888;">Questions</div></div>
         </div>
 
-            <div id="review-screen" class="screen">
+        <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
+        
+        <button onclick="location.reload()" style="margin-top:40px; padding:18px 50px; background:var(--primary); color:black; font-weight:bold; border-radius:30px; border:none; font-family:'Orbitron';">HOME</button>
+    </div> <div id="review-screen" class="screen">
         <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">REVIEW ROOM</h2>
         <div id="review-list" style="overflow-y:auto; flex:1; margin-bottom:15px; padding-right:5px;"></div>
         <button onclick="document.getElementById('review-screen').style.display='none'; document.getElementById('result-screen').style.display='flex';" class="stop-btn" style="border-color:#444; color:#aaa;">🔙 BACK TO RESULT</button>
     </div>
+
+
+
+        
 
       <button onclick="showReview()" style="width:100%; padding:18px; background:transparent; border:1px solid var(--primary); color:var(--primary); font-weight:bold; border-radius:15px; font-family:'Orbitron'; margin-top:20px;">🔍 REVIEW QUIZ</button>
         
@@ -1175,10 +1185,8 @@ function endBattle() {
                     let border = '1px solid rgba(255,255,255,0.08)';
                     
                     if (optIdx === item.ans) {
-                        // Sahi Option (Green)
                         color = 'var(--primary)'; bg = 'rgba(74, 222, 128, 0.1)'; border = '1px solid var(--primary)';
                     } else if (optIdx === item.user_ans && item.user_ans !== item.ans) {
-                        // User ka Galat Option (Red)
                         color = 'var(--danger)'; bg = 'rgba(239, 68, 68, 0.1)'; border = '1px solid var(--danger)';
                     }
                     
@@ -1189,10 +1197,12 @@ function endBattle() {
                 list.appendChild(div);
             });
         }
-
-            } // Ye showReview function ka aakhri bracket hai (Line 1191)
+// ❌ UPAR KI EXTRA "}" WALI LINE DELETE KAR DI GAYI HAI
 
 </script>
 </body>
 </html>
+
+
+        
 
