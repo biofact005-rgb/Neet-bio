@@ -581,605 +581,697 @@
 Ab saari screens exactly apne sahi dibbe (div) mein hain. Isko lagao aur enjoy karo! 🔥
 
     
-
-        
-
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); tg.setHeaderColor('#051405');
-        const user = tg.initDataUnsafe.user || {id: 123, first_name: "Doctor"};
+    const tg = window.Telegram.WebApp;
+    tg.expand(); tg.setHeaderColor('#051405');
+    const user = tg.initDataUnsafe.user || {id: 123, first_name: "Doctor"};
 
-        // LEAF ANIMATION
-        const leavesContainer = document.getElementById('leaves');
-        for(let i=0; i<12; i++) {
-            let leaf = document.createElement('div'); leaf.className = 'leaf';
-            leaf.style.left = Math.random() * 100 + '%';
-            leaf.style.animationDuration = (Math.random() * 5 + 6) + 's';
-            leaf.style.animationDelay = Math.random() * 5 + 's';
-            leavesContainer.appendChild(leaf);
-        }
+    // LEAF ANIMATION
+    const leavesContainer = document.getElementById('leaves');
+    for(let i=0; i<12; i++) {
+        let leaf = document.createElement('div'); leaf.className = 'leaf';
+        leaf.style.left = Math.random() * 100 + '%';
+        leaf.style.animationDuration = (Math.random() * 5 + 6) + 's';
+        leaf.style.animationDelay = Math.random() * 5 + 's';
+        if(leavesContainer) leavesContainer.appendChild(leaf);
+    }
 
-        // STATE
-        let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], solvedMistakes = [], reviewData = [];
-        let curr = 0, score = 0, timer = 30, tInt, wrongCount = 0;
-        let mode = 'normal';
-        let settings = JSON.parse(localStorage.getItem('jjk_set')) || {sound: true, vib: true};
-        let startTime, endTime;
-        
-        // SOUNDS
-        const sfxClick = new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3");
-        const sfxErr = new Audio("https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3");
-        
-        document.getElementById('u-name').innerText = user.first_name;
-        if(user.photo_url) document.getElementById('u-pic').src = user.photo_url;
-        if(user.id == 8557964907) document.getElementById('admin-btn').style.display='block';
-        
-        document.getElementById('tog-sound').checked = settings.sound;
-        document.getElementById('tog-vib').checked = settings.vib;
-        
-        sync();
-// Floating Text Logic
-function showFloatingText(x, y, text, type) {
-    let el = document.createElement('div');
-    el.className = 'float-score';
-    el.innerText = text;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+    // STATE
+    let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], solvedMistakes = [], reviewData = [];
+    let curr = 0, score = 0, timer = 30, tInt, wrongCount = 0;
+    let mode = 'normal';
+    let settings = JSON.parse(localStorage.getItem('jjk_set')) || {sound: true, vib: true};
+    let startTime, endTime;
+    let comboStreak = 0; // NEW: For Combo Strike
+
+    // SOUNDS
+    const sfxClick = new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3");
+    const sfxErr = new Audio("https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3");
+
+    // INIT
+    if(document.getElementById('u-name')) document.getElementById('u-name').innerText = user.first_name;
+    if(user.photo_url && document.getElementById('u-pic')) document.getElementById('u-pic').src = user.photo_url;
+    if(user.id == 8557964907 && document.getElementById('admin-btn')) document.getElementById('admin-btn').style.display='block';
     
-    // Color set karein
-    if(type === 'win') el.style.color = 'var(--primary)'; // Green
-    else el.style.color = 'var(--danger)'; // Red
-    
-    document.body.appendChild(el);
-    
-    // 1 second baad delete kar do taaki memory na bhare
-    setTimeout(() => { el.remove(); }, 1000);
-}
+    if(document.getElementById('tog-sound')) document.getElementById('tog-sound').checked = settings.sound;
+    if(document.getElementById('tog-vib')) document.getElementById('tog-vib').checked = settings.vib;
 
-        
+    sync();
 
-        
-        // --- SPLIT TRANSITION LOGIC ---
-        function transitionTo(p, action) {
-            let door = document.getElementById('door-overlay');
-            door.classList.add('door-closed'); // Close Door
-            
-            setTimeout(() => {
-                if(action === 'back') back();
-                else nav(p);
-                
-                // Open Door after small delay
-                setTimeout(() => {
-                    door.classList.remove('door-closed');
-                }, 500);
-            }, 600); // Wait for close animation
-        }
+    // Floating Text Logic
+    function showFloatingText(x, y, text, type) {
+        let el = document.createElement('div');
+        el.className = 'float-score';
+        el.innerText = text;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        if(type === 'win') el.style.color = 'var(--primary)';
+        else el.style.color = 'var(--danger)';
+        document.body.appendChild(el);
+        setTimeout(() => { el.remove(); }, 1000);
+    }
 
-        function sync(addScore=0) {
-            fetch('/api/get_data').then(r=>r.json()).then(d=> fullData=d);
-            fetch('/api/user/sync', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({id: user.id, name: user.first_name, add_score: addScore, mistakes: mistakes, solved: solvedMistakes})
-            }).then(r=>r.json()).then(d => {
-                document.getElementById('u-grade').innerText = d.grade;
-                document.getElementById('xp-nums').innerText = `${d.current_xp} / ${d.req_xp}`;
-                let h = d.percent;
-                document.getElementById('w1').style.height = h + "%";
-                document.getElementById('w2').style.height = h + "%";
-                if(d.mistake_count > 0) {
-                    document.getElementById('curse-box').style.display = 'block';
-                    document.getElementById('curse-count').innerText = d.mistake_count;
-                    window.mistakeList = d.mistakes_list;
-                } else document.getElementById('curse-box').style.display = 'none';
-                mistakes = []; solvedMistakes = [];
-            });
-        }
+    function transitionTo(p, action) {
+        let door = document.getElementById('door-overlay');
+        if(door) door.classList.add('door-closed');
+        setTimeout(() => {
+            if(action === 'back') back();
+            else nav(p);
+            setTimeout(() => { if(door) door.classList.remove('door-closed'); }, 500);
+        }, 600);
+    }
 
-        function switchTheme(t) {
-            document.body.style.background = (t==='quiz') ? '#080a08' : (t==='prof' ? '#010400' : '#051405');
-            document.getElementById('leaves').style.display = (t==='home') ? 'block' : 'none';
-            document.getElementById('tree-bg').style.display = (t==='prof') ? 'block' : 'none';
-            if(t==='quiz') document.querySelector('.dock-container').style.display='none';
-            else document.querySelector('.dock-container').style.display='flex';
-        }
-
-        function tab(t, btn) {
-            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-            document.getElementById(t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen')).style.display='flex';
-            document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
-            if(btn) btn.classList.add('active-dock');
-            if(t==='lb') loadLb('daily');
-        }
-
-        function nav(p) { path=p; 
-            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-            document.getElementById('folder-screen').style.display='flex';
-            renderFolder(); 
-        }
-        function back() { if(path.length>1) { path.pop(); renderFolder(); } else tab('home'); }
-        
-        
-        function renderFolder() {
-            let ref = fullData; path.forEach(k=> ref=ref[k]);
-            let list = document.getElementById('folder-list'); list.innerHTML='';
-            if(!ref) return;
-            let keys = Object.keys(ref);
-            
-            // Check if it's a file with the new 'data' array structure
-            let isFile = ref[keys[0]] && Array.isArray(ref[keys[0]].data); 
-
-            if(isFile) {
-                // Multi Select Mode
-                document.getElementById('config-btn').style.display='block';
-                keys.forEach(k=>{
-                    let d = document.createElement('div'); d.className = 'opt-btn show-check';
-                    d.innerHTML = `<div class="check-circle">✓</div> ${k}`;
-                    if(selChaps.includes(k)) d.classList.add('selected-opt');
-                    
-                    d.onclick = function() {
-                        if(selChaps.includes(k)) {
-                            selChaps=selChaps.filter(x=>x!=k);
-                            this.classList.remove('selected-opt');
-                        } else {
-                            selChaps.push(k);
-                            this.classList.add('selected-opt');
-                        }
-                    };
-                    if(mode==='admin') addDelBtn(d, k);
-                    list.appendChild(d);
-                });
-            } else {
-                document.getElementById('config-btn').style.display='none';
-                keys.forEach(k=>{
-                    let d = document.createElement('div'); d.className = 'glass-box'; 
-                    d.style.display='flex'; d.style.alignItems='center'; d.style.cursor='pointer';
-                    d.innerHTML = `<span style="font-size:1.5rem; margin-right:15px;">📁</span> <span style="font-weight:600;">${k}</span>`;
-                    d.onclick = ()=> { path.push(k); renderFolder(); };
-                    if(mode==='admin') addDelBtn(d, k);
-                    list.appendChild(d);
-                });
+    function sync(addScore=0) {
+        fetch('/api/get_data').then(r=>r.json()).then(d=> fullData=d);
+        fetch('/api/user/sync', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({id: user.id, name: user.first_name, add_score: addScore, mistakes: mistakes, solved: solvedMistakes})
+        }).then(r=>r.json()).then(d => {
+            if(document.getElementById('u-grade')) document.getElementById('u-grade').innerText = d.grade;
+            if(document.getElementById('xp-nums')) document.getElementById('xp-nums').innerText = `${d.current_xp} / ${d.req_xp}`;
+            let h = d.percent;
+            if(document.getElementById('w1')) document.getElementById('w1').style.height = h + "%";
+            if(document.getElementById('w2')) document.getElementById('w2').style.height = h + "%";
+            if(d.mistake_count > 0 && document.getElementById('curse-box')) {
+                document.getElementById('curse-box').style.display = 'block';
+                document.getElementById('curse-count').innerText = d.mistake_count;
+                window.mistakeList = d.mistakes_list;
+            } else if(document.getElementById('curse-box')) {
+                document.getElementById('curse-box').style.display = 'none';
             }
-        }
-
-        function addDelBtn(parent, targetName) {
-            let del = document.createElement('span'); del.innerText = '🗑️'; del.style.marginLeft='auto'; del.style.cursor='pointer';
-            del.onclick = (e) => { e.stopPropagation(); deleteItem(targetName); };
-            parent.appendChild(del);
-        }
-
-        // NAYA FUNCTION: Decide karega limit screen dikhani hai ya nahi
-        function handleStartClick() {
-            if(selChaps.length===0) return tg.showAlert("Select chapters!");
-            
-            let ref = fullData; path.forEach(k=> ref=ref[k]);
-            let firstChap = selChaps[0]; 
-            
-            if(ref[firstChap] && ref[firstChap].mode === 'unlimited') {
-                startUnlimited();
-            } else {
-                showSetup();
-            }
-        }
-
-        function showSetup() {
-            if(selChaps.length===0) return tg.showAlert("Select chapters!");
-            document.getElementById('folder-screen').style.display='none';
-            document.getElementById('setup-screen').style.display='flex';
-        }
-
-        // NAYA FUNCTION: Unlimited mode engine
-                // NAYA FUNCTION: Unlimited mode engine (No Shuffle)
-        function startUnlimited() {
-            let ref = fullData; path.forEach(k=> ref=ref[k]);
-            questions = []; 
-            
-            // Saare questions line-wise collect honge
-            selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-            
-            // YAHAN SE SHUFFLE WALI LINE HATA DI GAYI HAI taaki sequence same rahe
-            
-            if(questions.length===0) return tg.showAlert("No Questions!");
-            
-            mode='unlimited'; 
-            window.quizTimerStart = null; 
-            startEngine();
-        }
-
-
-        function finalStart() {
-            let ref = fullData; path.forEach(k=> ref=ref[k]);
-            questions = []; 
-            // Updated to fetch from .data
-            selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-            questions.sort(()=>Math.random()-0.5); 
-            
-            let lInput = parseInt(document.getElementById('q-limit').value);
-            let tInput = parseInt(document.getElementById('q-timer').value);
-            let limit = (lInput > 0 && lInput <= 500) ? lInput : 20;
-            let tm = (tInput > 0 && tInput <= 120) ? tInput : 30;
-
-            questions = questions.slice(0, limit);
-            if(questions.length===0) return tg.showAlert("No Questions!");
-            
-            mode='normal'; window.quizTimerStart = tm; startEngine();
-        }
-
-        function startMistakes() {
-            questions = window.mistakeList;
-            if(!questions || questions.length==0) return;
-            mode='mistake'; window.quizTimerStart = 30; startEngine();
-        }
-
-        
-    
-        
-            function nextQuestion() {
-            curr++;
-            loadQ();
-        }
-
-        function skipQuestion() {
-            clearInterval(tInt); // Timer rok do
-            let q = questions[curr];
-            
-            // Question ko skipped mark karo (user_ans = -1)
-            reviewData.push({ q: q.q, opts: q.opts, ans: q.ans, user_ans: -1 });
-            
-            curr++;
-            loadQ();
-        }
-        
-    
-
-            <div id="game-screen" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; z-index:2;">
-            <div style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px; font-size:1rem; font-weight:600;" id="timer-box">30s</div>
-            <div style="color:var(--primary); font-family:'Orbitron'; font-size:1.1rem;">XP: <span id="curr-score">0</span></div>
-        </div>
-        
-        <div id="q-palette" class="q-palette"></div>
-
-        <div class="q-container" id="main-q-box">
-            <div id="q-txt" style="font-size:1.05rem; line-height:1.6; font-weight:500; position:relative; z-index:2;">Loading...</div>
-        </div>
-
-        
-
-            
-        
-        function loadLb(filter, btn) {
-          if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
-    
-            document.getElementById('lb-list').innerHTML = '<div style="text-align:center; color:#555;">Fetching ranks...</div>';
-             document.getElementById('podium-area').innerHTML = ''; // Clear podium
-
-             fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
-               let list = document.getElementById('lb-list'); 
-                 let podium = document.getElementById('podium-area');
-                 list.innerHTML=''; podium.innerHTML='';
-         
-               let top3 = d.top.slice(0, 3);
-              let rest = d.top.slice(3);
-
-        // --- PODIUM (Top 3) ---
-        let html = '';
-        const makeCard = (u, rank) => {
-            if(!u) return ''; 
-            let pic = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; 
-            return `<div class="podium-item rank-${rank}-box">${rank === 1 ? '<div class="crown">👑</div>' : ''}<div class="p-avatar-box"><img class="p-img" src="${pic}"><div class="p-badge">${rank}</div></div><div class="p-name">${u.name}</div><div class="p-score">${u.score}</div></div>`;
-        };
-        // Order: 2nd (Left), 1st (Center), 3rd (Right)
-        if(top3[1]) html += makeCard(top3[1], 2);
-        if(top3[0]) html += makeCard(top3[0], 1);
-        if(top3[2]) html += makeCard(top3[2], 3);
-        podium.innerHTML = html;
-
-        // --- LIST (Rest) ---
-        rest.forEach(u => {
-            let div = document.createElement('div'); div.className = `rank-card`; div.style.color = '#aaa';
-            div.innerHTML = `<span style="font-weight:600; width:30px;">#${u.rank}</span><span style="flex:1; margin-left:10px;">${u.name}</span><span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
-            list.appendChild(div);
+            mistakes = []; solvedMistakes = [];
         });
-        if(d.top.length === 0) list.innerHTML = '<div style="text-align:center; margin-top:20px; color:#666;">No data yet!</div>';
-            });
-            }
+    }
 
+    function switchTheme(t) {
+        document.body.style.background = (t==='quiz') ? '#080a08' : (t==='prof' ? '#010400' : '#051405');
+        if(document.getElementById('leaves')) document.getElementById('leaves').style.display = (t==='home') ? 'block' : 'none';
+        if(document.getElementById('tree-bg')) document.getElementById('tree-bg').style.display = (t==='prof') ? 'block' : 'none';
+        let dock = document.querySelector('.dock-container');
+        if(dock) dock.style.display = (t==='quiz') ? 'none' : 'flex';
+    }
 
-        function saveSet() { 
-            settings.sound = document.getElementById('tog-sound').checked; 
-            settings.vib = document.getElementById('tog-vib').checked; 
-            localStorage.setItem('jjk_set', JSON.stringify(settings)); 
-        }
-        function deleteItem(target) {
-            if(!confirm(`Delete "${target}"?`)) return;
-            fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
-        }
+    function tab(t, btn) {
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        let targetId = t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen');
+        if(document.getElementById(targetId)) document.getElementById(targetId).style.display='flex';
+        document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
+        if(btn) btn.classList.add('active-dock');
+        if(t==='lb') loadLb('daily');
+    }
 
+    function nav(p) { 
+        path=p; 
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        if(document.getElementById('folder-screen')) document.getElementById('folder-screen').style.display='flex';
+        renderFolder(); 
+    }
+    
+    function back() { if(path.length>1) { path.pop(); renderFolder(); } else tab('home'); }
+    
+    function renderFolder() {
+        let ref = fullData; path.forEach(k=> ref=ref[k]);
+        let list = document.getElementById('folder-list'); 
+        if(!list) return;
+        list.innerHTML='';
+        if(!ref) return;
+        let keys = Object.keys(ref);
         
+        let isFile = ref[keys[0]] && Array.isArray(ref[keys[0]].data); 
 
-      // ============================
-// ⚔️ BATTLE LOGIC (Client)
-// ============================
-const socket = io();
-let currentRoom = null;
-let isHost = false;
-let battleScore = 0;
-
-// 1. Initial Check for Deep Link (join_CODE)
-window.onload = function() {
-    let params = tg.initDataUnsafe.start_param;
-    if(params && params.startsWith('join_')) {
-        let code = params.split('_')[1];
-        openBattleLobby();
-        document.getElementById('join-code-input').value = code;
-        setTimeout(() => joinRoomManual(), 500); // Auto Join
-    }
-};
-
-function openBattleLobby() {
-    switchTheme('prof'); // Dark theme
-    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-    document.getElementById('lobby-screen').style.display='flex';
-    
-    // Create Room Request
-    if(!currentRoom) {
-        socket.emit('create_room', {uid: user.id, name: user.first_name});
-    }
-}
-
-socket.on('room_created', (data) => {
-    currentRoom = data.room_id;
-    isHost = true;
-    document.getElementById('room-code-display').innerText = currentRoom;
-    document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>';
-});
-
-function shareRoomLink() {
-    let link = `https://t.me/Neet2026quiiz_bot/Neet2026quiiz?startapp=join_${currentRoom}`;
-    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Challenge me in NEET Battle! Code: ${currentRoom}`);
-}
-
-function joinRoomManual() {
-    let code = document.getElementById('join-code-input').value.toUpperCase();
-    if(code.length < 4) return tg.showAlert("Invalid Code");
-    socket.emit('join_room_request', {room_id: code, uid: user.id, name: user.first_name});
-}
-
-socket.on('player_joined', (data) => {
-    currentRoom = document.getElementById('join-code-input').value || currentRoom;
-    tg.showAlert(`${data.p2} Joined!`);
-    
-    // Lobby UI Update
-    document.getElementById('lobby-status').innerHTML = `
-        <div style="color:var(--primary); font-size:1.2rem;">${data.p1} VS ${data.p2}</div>
-        ${isHost ? '<button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:20px; padding:15px; width:100%; border-radius:10px; font-weight:bold;">START MATCH 🚀</button>' : '<div style="margin-top:20px;">Waiting for Host to Start...</div>'}
-    `;
-});
-
-function startBattle() {
-    socket.emit('start_game', {room_id: currentRoom});
-}
-
-socket.on('game_started', (data) => {
-    // Switch to Game Screen
-    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-    document.getElementById('battle-screen').style.display='flex';
-    
-    // Load Questions
-    window.battleQs = data.questions;
-    window.bCurr = 0;
-    battleScore = 0;
-    loadBattleQ();
-});
-
-
-let bTimer;
-let timeLeft = 30;
-
-function updateTimerBar() {
-    let width = (timeLeft / 30) * 100;
-    document.getElementById('battle-timer-bar').style.width = width + "%";
-}
-
-function loadBattleQ() {
-    if(window.bCurr >= window.battleQs.length) return showBattleResult();
-    
-    // Reset Timer
-    timeLeft = 30;
-    updateTimerBar();
-    
-    // UI Reset
-    document.getElementById('waiting-msg').style.display = 'none';
-    document.getElementById('battle-q-area').style.display = 'block';
-    
-    let q = window.battleQs[window.bCurr];
-    document.getElementById('battle-q-txt').innerText = `Q${window.bCurr+1}: ${q.q}`;
-    let opts = document.getElementById('battle-opts'); opts.innerHTML = '';
-    
-    q.opts.forEach((o, i) => {
-        let btn = document.createElement('div'); btn.className = 'opt-btn'; btn.innerText = o;
-        btn.onclick = (e) => submitBattleAns(i, q.ans, btn, e);
-        opts.appendChild(btn);
-    });
-
-    // Start 30s Countdown
-    clearInterval(bTimer);
-    bTimer = setInterval(() => {
-        timeLeft--;
-        updateTimerBar();
-        if(timeLeft <= 0) {
-            clearInterval(bTimer);
-            submitBattleAns(-1, q.ans, null); // Time up auto-submit
-        }
-    }, 1000);
-}
-
-function submitBattleAns(idx, correctIdx, btn, e) {
-    clearInterval(bTimer); // Timer roko
-    let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
-    allBtns.forEach(b => b.onclick = null); // Disable buttons
-    
-    let x = e ? e.clientX : window.innerWidth / 2;
-    let y = e ? e.clientY : window.innerHeight / 2;
-
-    if(idx !== -1) {
-        if(idx === correctIdx) {
-            if(btn) btn.classList.add('correct');
-            battleScore += 4;
-            showFloatingText(x, y, "+4", "win");
-        } else {
-            if(btn) btn.classList.add('wrong');
-            if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
-            battleScore -= 1;
-            showFloatingText(x, y, "-1", "loss");
-        }
-    }
-
-    // My score local update
-    document.getElementById('p1-score').innerText = battleScore;
-    
-    // Server ko score bhejo
-    socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
-    
-    // Wait for opponent
-    setTimeout(() => {
-        document.getElementById('battle-q-area').style.display = 'none';
-        document.getElementById('waiting-msg').style.display = 'block';
-    }, 1000);
-}
-
-// Dono ke answer aane par server ye event bhejega
-socket.on('next_question', () => {
-    window.bCurr++;
-    loadBattleQ();
-});
-
-// Live score updates
-socket.on('opponent_update', (data) => {
-    // IsHost logic se check karein ki kaun kiska score hai
-    let myScore = isHost ? data.p1_score : data.p2_score;
-    let oppScore = isHost ? data.p2_score : data.p1_score;
-    
-    document.getElementById('p1-score').innerText = myScore;
-    document.getElementById('p2-score').innerText = oppScore;
-});
-
-function showBattleResult() {
-    let myFinal = parseInt(document.getElementById('p1-score').innerText);
-    let oppFinal = parseInt(document.getElementById('p2-score').innerText);
-    
-    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-    document.getElementById('battle-result-screen').style.display='flex';
-    
-    document.getElementById('final-my-score').innerText = myFinal;
-    document.getElementById('final-opp-score').innerText = oppFinal;
-    
-    let title = document.getElementById('battle-status-title');
-    if(myFinal > oppFinal) { 
-        title.innerText = "🏆 VICTORY!"; 
-        title.style.color = "var(--gold)";
-        if(settings.vib) tg.HapticFeedback.notificationOccurred('success');
-    } else if(myFinal < oppFinal) { 
-        title.innerText = "💀 DEFEAT!"; 
-        title.style.color = "var(--danger)";
-        if(settings.vib) tg.HapticFeedback.notificationOccurred('error');
-    } else { 
-        title.innerText = "🤝 DRAW!"; 
-        title.style.color = "white"; 
-    }
-}
-
-  
-
-function endBattle() {
-    tg.showAlert(`Game Over! Final Score: ${battleScore}`);
-    socket.emit('game_over', {room_id: currentRoom});
-    goHome();
-}
-
-            // 1. Main Function (Jab Review button click ho)
-        function showReview() {
-            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-            document.getElementById('review-screen').style.display='flex';
-            
-            // Default "All" tab ko active karna
-            let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            if(tabs[0]) tabs[0].classList.add('active');
-
-            renderReviewData('all');
-        }
-
-        // 2. Filter Tab Click Logic
-        function filterReview(type, btn) {
-            let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-
-            renderReviewData(type);
-        }
-
-        // 3. Data Render Logic (Jo category ke hisab se data filter karega)
-        function renderReviewData(filterType) {
-            let list = document.getElementById('review-list');
-            list.innerHTML = '';
-            
-            // Logic to filter array based on user's selection
-            let filteredData = reviewData.filter(item => {
-                if (filterType === 'all') return true;
-                if (filterType === 'correct') return item.user_ans === item.ans;
-                if (filterType === 'skipped') return item.user_ans === -1;
-                if (filterType === 'incorrect') return item.user_ans !== item.ans && item.user_ans !== -1;
-                return true;
+        if(isFile) {
+            document.getElementById('config-btn').style.display='block';
+            keys.forEach(k=>{
+                let d = document.createElement('div'); d.className = 'opt-btn show-check';
+                d.innerHTML = `<div class="check-circle">✓</div> ${k}`;
+                if(selChaps.includes(k)) d.classList.add('selected-opt');
+                
+                d.onclick = function() {
+                    if(selChaps.includes(k)) {
+                        selChaps=selChaps.filter(x=>x!=k);
+                        this.classList.remove('selected-opt');
+                    } else {
+                        selChaps.push(k);
+                        this.classList.add('selected-opt');
+                    }
+                };
+                if(mode==='admin') addDelBtn(d, k);
+                list.appendChild(d);
             });
+        } else {
+            document.getElementById('config-btn').style.display='none';
+            keys.forEach(k=>{
+                let d = document.createElement('div'); d.className = 'glass-box'; 
+                d.style.display='flex'; d.style.alignItems='center'; d.style.cursor='pointer';
+                d.innerHTML = `<span style="font-size:1.5rem; margin-right:15px;">📁</span> <span style="font-weight:600;">${k}</span>`;
+                d.onclick = ()=> { path.push(k); renderFolder(); };
+                if(mode==='admin') addDelBtn(d, k);
+                list.appendChild(d);
+            });
+        }
+    }
 
-            if(filteredData.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:#666; margin-top:20px;">No questions found in this category!</div>';
-                return;
+    function addDelBtn(parent, targetName) {
+        let del = document.createElement('span'); del.innerText = '🗑️'; del.style.marginLeft='auto'; del.style.cursor='pointer';
+        del.onclick = (e) => { e.stopPropagation(); deleteItem(targetName); };
+        parent.appendChild(del);
+    }
+
+    function handleStartClick() {
+        if(selChaps.length===0) return tg.showAlert("Select chapters!");
+        let ref = fullData; path.forEach(k=> ref=ref[k]);
+        let firstChap = selChaps[0]; 
+        if(ref[firstChap] && ref[firstChap].mode === 'unlimited') {
+            startUnlimited();
+        } else {
+            showSetup();
+        }
+    }
+
+    function showSetup() {
+        if(selChaps.length===0) return tg.showAlert("Select chapters!");
+        document.getElementById('folder-screen').style.display='none';
+        document.getElementById('setup-screen').style.display='flex';
+    }
+
+    function startUnlimited() {
+        let ref = fullData; path.forEach(k=> ref=ref[k]);
+        questions = []; 
+        selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
+        if(questions.length===0) return tg.showAlert("No Questions!");
+        mode='unlimited'; 
+        window.quizTimerStart = null; 
+        startEngine();
+    }
+
+    function finalStart() {
+        let ref = fullData; path.forEach(k=> ref=ref[k]);
+        questions = []; 
+        selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
+        questions.sort(()=>Math.random()-0.5); 
+        
+        let lInput = parseInt(document.getElementById('q-limit').value);
+        let tInput = parseInt(document.getElementById('q-timer').value);
+        let limit = (lInput > 0 && lInput <= 500) ? lInput : 20;
+        let tm = (tInput > 0 && tInput <= 120) ? tInput : 30;
+
+        questions = questions.slice(0, limit);
+        if(questions.length===0) return tg.showAlert("No Questions!");
+        
+        mode='normal'; window.quizTimerStart = tm; startEngine();
+    }
+
+    function startMistakes() {
+        questions = window.mistakeList;
+        if(!questions || questions.length==0) return;
+        mode='mistake'; window.quizTimerStart = 30; startEngine();
+    }
+
+    // ==========================================
+    // ⚙️ THE NEW ENGINE (COMBO + PALETTE)
+    // ==========================================
+    function startEngine() {
+        switchTheme('quiz');
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('game-screen').style.display='flex';
+        
+        curr=0; score=0; mistakes=[]; solvedMistakes=[]; wrongCount=0; comboStreak=0;
+        startTime = new Date();
+        
+        reviewData = questions.map(q => ({ q: q.q, opts: q.opts, ans: q.ans, user_ans: null }));
+        
+        let mainBox = document.getElementById('main-q-box');
+        if(mainBox) mainBox.classList.remove('combo-glow');
+        loadQ();
+    }
+
+    function renderPalette() {
+        let pal = document.getElementById('q-palette');
+        if(!pal) return;
+        pal.innerHTML = '';
+        questions.forEach((q, idx) => {
+            let btn = document.createElement('div');
+            btn.className = 'pal-btn';
+            btn.innerText = idx + 1;
+            
+            if (idx === curr) btn.classList.add('active');
+            else if (reviewData[idx] && reviewData[idx].user_ans !== null) {
+                if (reviewData[idx].user_ans === -1) btn.classList.add('skipped');
+                else if (reviewData[idx].user_ans === reviewData[idx].ans) btn.classList.add('solved');
+                else btn.classList.add('wrong');
             }
             
-            filteredData.forEach((item) => {
-                let div = document.createElement('div');
-                div.className = 'q-container';
-                div.style.marginBottom = '15px';
-                div.style.padding = '15px';
-                
-                // Original question number maintain rakhne ke liye
-                let originalIndex = reviewData.indexOf(item) + 1;
-                
-                let html = `<div style="font-weight:bold; margin-bottom:10px; font-size:0.95rem;">Q${originalIndex}: ${item.q}</div>`;
-                
-                item.opts.forEach((opt, optIdx) => {
-                    let color = '#ddd';
-                    let bg = 'rgba(255,255,255,0.03)';
-                    let border = '1px solid rgba(255,255,255,0.08)';
-                    
-                    if (optIdx === item.ans) {
-                        color = 'var(--primary)'; bg = 'rgba(74, 222, 128, 0.1)'; border = '1px solid var(--primary)';
-                    } else if (optIdx === item.user_ans && item.user_ans !== item.ans) {
-                        color = 'var(--danger)'; bg = 'rgba(239, 68, 68, 0.1)'; border = '1px solid var(--danger)';
-                    }
-                    
-                    html += `<div style="padding:10px; margin-bottom:5px; border-radius:8px; background:${bg}; border:${border}; color:${color}; font-size:0.85rem;">${opt}</div>`;
-                });
-                
-                // Agar skipped hai toh alag se ek alert dikha denge
-                if(item.user_ans === -1) {
-                    html += `<div style="margin-top:10px; color:var(--gold); font-size:0.8rem; font-weight:bold; text-align:center;">⚠️ SKIPPED (Time Out)</div>`;
-                }
+            btn.onclick = () => jumpToQ(idx);
+            pal.appendChild(btn);
+        });
+        
+        let activeBtn = pal.querySelector('.active');
+        if(activeBtn) activeBtn.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
+    }
 
-                div.innerHTML = html;
+    function jumpToQ(idx) {
+        clearInterval(tInt);
+        curr = idx;
+        loadQ();
+    }
+
+    function loadQ() {
+        if(curr>=questions.length) return finishQuiz();
+        let q = questions[curr];
+        document.getElementById('q-txt').innerText = q.q;
+        
+        renderPalette(); 
+        
+        let optsDiv = document.getElementById('opts'); optsDiv.innerHTML='';
+        
+        let alreadyAnswered = reviewData[curr] && reviewData[curr].user_ans !== null;
+        
+        q.opts.forEach((o, i)=>{
+            let d = document.createElement('div'); d.className='opt-btn'; d.innerText=o;
+            if(!alreadyAnswered) d.onclick = (e) => check(i, d, e);
+            optsDiv.appendChild(d);
+        });
+
+        if (alreadyAnswered) {
+            let uAns = reviewData[curr].user_ans;
+            let cAns = reviewData[curr].ans;
+            let allOpts = optsDiv.querySelectorAll('.opt-btn');
+            
+            if(uAns === cAns) {
+                if(allOpts[uAns]) allOpts[uAns].classList.add('correct');
+            } else if(uAns !== -1) {
+                if(allOpts[uAns]) allOpts[uAns].classList.add('wrong');
+                if(allOpts[cAns]) allOpts[cAns].classList.add('correct');
+            } else {
+                if(allOpts[cAns]) allOpts[cAns].classList.add('correct'); 
+            }
+            
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('timer-box').innerText = '--';
+            clearInterval(tInt);
+        } else {
+            document.getElementById('skip-btn').style.display = 'block';
+            document.getElementById('next-btn').style.display = 'none';
+            
+            if (mode === 'unlimited') {
+                document.getElementById('timer-box').style.display = 'none';
+                clearInterval(tInt);
+            } else {
+                document.getElementById('timer-box').style.display = 'block';
+                timer = window.quizTimerStart; 
+                document.getElementById('timer-box').innerText = timer + 's';
+                clearInterval(tInt); 
+                tInt = setInterval(updateTimer, 1000);
+            }
+        }
+    }
+
+    function updateTimer() {
+        let box = document.getElementById('timer-box'); 
+        if(box) box.innerText = timer + 's';
+        if(timer-- <= 0) check(-1, null);
+    }
+
+    function check(i, btn, event) {
+        clearInterval(tInt); 
+        let q = questions[curr];
+        
+        let optsContainer = document.getElementById('opts');
+        let allOptions = optsContainer.querySelectorAll('.opt-btn');
+        allOptions.forEach(d => { d.onclick = null; d.style.pointerEvents = 'none'; });
+        
+        if(settings.sound) sfxClick.play();
+
+        let x = event ? event.clientX : window.innerWidth / 2;
+        let y = event ? event.clientY : window.innerHeight / 2;
+
+        if(i === q.ans) {
+            if(btn) btn.classList.add('correct');
+            
+            comboStreak++;
+            let bonus = (comboStreak >= 3) ? 2 : 0; 
+            score += (4 + bonus);
+            
+            if(comboStreak >= 3) {
+                document.getElementById('main-q-box').classList.add('combo-glow');
+                showFloatingText(x, y-40, `🔥 COMBO x${comboStreak}! +${4+bonus}`, "win");
+            } else {
+                showFloatingText(x, y, "+4", "win");
+            }
+            
+            if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            if(mode==='mistake') solvedMistakes.push(q.q);
+        } else {
+            if(btn) btn.classList.add('wrong'); 
+            if(allOptions[q.ans]) allOptions[q.ans].classList.add('correct');
+            
+            comboStreak = 0;
+            if(document.getElementById('main-q-box')) document.getElementById('main-q-box').classList.remove('combo-glow');
+            score -= 1;
+            wrongCount++;
+            showFloatingText(x, y, "-1", "loss");
+            
+            if(settings.sound) sfxErr.play();
+            if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            if(mode!=='mistake' && i !== -1) mistakes.push(q);
+        }
+
+        document.getElementById('curr-score').innerText = score;
+        reviewData[curr] = { q: q.q, opts: q.opts, ans: q.ans, user_ans: i };
+        renderPalette(); 
+        
+        document.getElementById('skip-btn').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+    
+    function nextQuestion() {
+        curr++;
+        while(curr < questions.length && reviewData[curr] && reviewData[curr].user_ans !== null) {
+            curr++;
+        }
+        loadQ();
+    }
+
+    function skipQuestion() {
+        clearInterval(tInt); 
+        comboStreak = 0; 
+        if(document.getElementById('main-q-box')) document.getElementById('main-q-box').classList.remove('combo-glow');
+        
+        let q = questions[curr];
+        reviewData[curr] = { q: q.q, opts: q.opts, ans: q.ans, user_ans: -1 };
+        
+        curr++;
+        loadQ();
+    }
+    
+    function finishQuiz() {
+        clearInterval(tInt);
+        endTime = new Date();
+        let duration = Math.round((endTime - startTime) / 1000);
+        
+        let attempted = 0;
+        reviewData.forEach((r, i) => { 
+            if(!r || r.user_ans === null) reviewData[i] = { q: questions[i].q, opts: questions[i].opts, ans: questions[i].ans, user_ans: -1 };
+            else if(r.user_ans !== -1) attempted++;
+        });
+
+        let correct = attempted - wrongCount;
+        let acc = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+
+        switchTheme('home');
+        document.getElementById('game-screen').style.display='none';
+        document.getElementById('result-screen').style.display='flex';
+        document.getElementById('final-score').innerText = score > 0 ? "+" + score : score;
+        document.getElementById('res-acc').innerText = acc + "%";
+        document.getElementById('res-wrong').innerText = wrongCount;
+        document.getElementById('res-time').innerText = duration + "s";
+        document.getElementById('res-total').innerText = questions.length;
+        selChaps = []; 
+        sync(score);
+    }
+
+    // ==========================================
+    // 🏆 LEADERBOARD & OTHERS
+    // ==========================================
+    function loadLb(filter, btn) {
+        if(btn) { document.querySelectorAll('.lb-tab').forEach(t=>{ t.classList.remove('active'); }); btn.classList.add('active'); }
+        document.getElementById('lb-list').innerHTML = '<div style="text-align:center; color:#555;">Fetching ranks...</div>';
+        document.getElementById('podium-area').innerHTML = ''; 
+
+        fetch(`/api/leaderboard/${filter}?uid=${user.id}`).then(r=>r.json()).then(d=>{
+            let list = document.getElementById('lb-list'); 
+            let podium = document.getElementById('podium-area');
+            list.innerHTML=''; podium.innerHTML='';
+    
+            let top3 = d.top.slice(0, 3);
+            let rest = d.top.slice(3);
+
+            let html = '';
+            const makeCard = (u, rank) => {
+                if(!u) return ''; 
+                let pic = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; 
+                return `<div class="podium-item rank-${rank}-box">${rank === 1 ? '<div class="crown">👑</div>' : ''}<div class="p-avatar-box"><img class="p-img" src="${pic}"><div class="p-badge">${rank}</div></div><div class="p-name">${u.name}</div><div class="p-score">${u.score}</div></div>`;
+            };
+            
+            if(top3[1]) html += makeCard(top3[1], 2);
+            if(top3[0]) html += makeCard(top3[0], 1);
+            if(top3[2]) html += makeCard(top3[2], 3);
+            podium.innerHTML = html;
+
+            rest.forEach(u => {
+                let div = document.createElement('div'); div.className = `rank-card`; div.style.color = '#aaa';
+                div.innerHTML = `<span style="font-weight:600; width:30px;">#${u.rank}</span><span style="flex:1; margin-left:10px;">${u.name}</span><span style="font-family:'Orbitron'; font-weight:bold; color:var(--primary);">${u.score}</span>`;
                 list.appendChild(div);
             });
+            if(d.top.length === 0) list.innerHTML = '<div style="text-align:center; margin-top:20px; color:#666;">No data yet!</div>';
+        });
+    }
+
+    function saveSet() { 
+        settings.sound = document.getElementById('tog-sound').checked; 
+        settings.vib = document.getElementById('tog-vib').checked; 
+        localStorage.setItem('jjk_set', JSON.stringify(settings)); 
+    }
+
+    function deleteItem(target) {
+        if(!confirm(`Delete "${target}"?`)) return;
+        fetch('/api/admin/delete', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({uid: user.id, path: path, target: target}) }).then(r=>r.json()).then(d=>{ if(d.status) renderFolder(); else tg.showAlert(d.error); });
+    }
+
+    // ============================
+    // ⚔️ BATTLE LOGIC (SocketIO)
+    // ============================
+    const socket = io();
+    let currentRoom = null;
+    let isHost = false;
+    let battleScore = 0;
+
+    window.onload = function() {
+        let params = tg.initDataUnsafe.start_param;
+        if(params && params.startsWith('join_')) {
+            let code = params.split('_')[1];
+            openBattleLobby();
+            document.getElementById('join-code-input').value = code;
+            setTimeout(() => joinRoomManual(), 500); 
+        }
+    };
+
+    function openBattleLobby() {
+        switchTheme('prof'); 
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('lobby-screen').style.display='flex';
+        if(!currentRoom) { socket.emit('create_room', {uid: user.id, name: user.first_name}); }
+    }
+
+    socket.on('room_created', (data) => {
+        currentRoom = data.room_id;
+        isHost = true;
+        document.getElementById('room-code-display').innerText = currentRoom;
+        document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Waiting for opponent...</div>';
+    });
+
+    function shareRoomLink() {
+        let link = `https://t.me/Neet2026quiiz_bot/Neet2026quiiz?startapp=join_${currentRoom}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Challenge me in NEET Battle! Code: ${currentRoom}`);
+    }
+
+    function joinRoomManual() {
+        let code = document.getElementById('join-code-input').value.toUpperCase();
+        if(code.length < 4) return tg.showAlert("Invalid Code");
+        socket.emit('join_room_request', {room_id: code, uid: user.id, name: user.first_name});
+    }
+
+    socket.on('player_joined', (data) => {
+        currentRoom = document.getElementById('join-code-input').value || currentRoom;
+        tg.showAlert(`${data.p2} Joined!`);
+        document.getElementById('lobby-status').innerHTML = `
+            <div style="color:var(--primary); font-size:1.2rem;">${data.p1} VS ${data.p2}</div>
+            ${isHost ? '<button onclick="startBattle()" style="background:var(--gold); color:black; margin-top:20px; padding:15px; width:100%; border-radius:10px; font-weight:bold;">START MATCH 🚀</button>' : '<div style="margin-top:20px;">Waiting for Host to Start...</div>'}
+        `;
+    });
+
+    function startBattle() { socket.emit('start_game', {room_id: currentRoom}); }
+
+    socket.on('game_started', (data) => {
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('battle-screen').style.display='flex';
+        window.battleQs = data.questions;
+        window.bCurr = 0;
+        battleScore = 0;
+        loadBattleQ();
+    });
+
+    let bTimer;
+    let timeLeft = 30;
+
+    function updateTimerBar() {
+        let width = (timeLeft / 30) * 100;
+        document.getElementById('battle-timer-bar').style.width = width + "%";
+    }
+
+    function loadBattleQ() {
+        if(window.bCurr >= window.battleQs.length) return showBattleResult();
+        timeLeft = 30;
+        updateTimerBar();
+        document.getElementById('waiting-msg').style.display = 'none';
+        document.getElementById('battle-q-area').style.display = 'block';
+        let q = window.battleQs[window.bCurr];
+        document.getElementById('battle-q-txt').innerText = `Q${window.bCurr+1}: ${q.q}`;
+        let opts = document.getElementById('battle-opts'); opts.innerHTML = '';
+        
+        q.opts.forEach((o, i) => {
+            let btn = document.createElement('div'); btn.className = 'opt-btn'; btn.innerText = o;
+            btn.onclick = (e) => submitBattleAns(i, q.ans, btn, e);
+            opts.appendChild(btn);
+        });
+
+        clearInterval(bTimer);
+        bTimer = setInterval(() => {
+            timeLeft--;
+            updateTimerBar();
+            if(timeLeft <= 0) {
+                clearInterval(bTimer);
+                submitBattleAns(-1, q.ans, null); 
+            }
+        }, 1000);
+    }
+
+    function submitBattleAns(idx, correctIdx, btn, e) {
+        clearInterval(bTimer); 
+        let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
+        allBtns.forEach(b => b.onclick = null); 
+        
+        let x = e ? e.clientX : window.innerWidth / 2;
+        let y = e ? e.clientY : window.innerHeight / 2;
+
+        if(idx !== -1) {
+            if(idx === correctIdx) {
+                if(btn) btn.classList.add('correct');
+                battleScore += 4;
+                showFloatingText(x, y, "+4", "win");
+            } else {
+                if(btn) btn.classList.add('wrong');
+                if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
+                battleScore -= 1;
+                showFloatingText(x, y, "-1", "loss");
+            }
         }
 
+        document.getElementById('p1-score').innerText = battleScore;
+        socket.emit('submit_answer', {room_id: currentRoom, uid: user.id, score: battleScore});
+        setTimeout(() => {
+            document.getElementById('battle-q-area').style.display = 'none';
+            document.getElementById('waiting-msg').style.display = 'block';
+        }, 1000);
+    }
+
+    socket.on('next_question', () => { window.bCurr++; loadBattleQ(); });
+
+    socket.on('opponent_update', (data) => {
+        let myScore = isHost ? data.p1_score : data.p2_score;
+        let oppScore = isHost ? data.p2_score : data.p1_score;
+        document.getElementById('p1-score').innerText = myScore;
+        document.getElementById('p2-score').innerText = oppScore;
+    });
+
+    function showBattleResult() {
+        let myFinal = parseInt(document.getElementById('p1-score').innerText);
+        let oppFinal = parseInt(document.getElementById('p2-score').innerText);
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('battle-result-screen').style.display='flex';
+        document.getElementById('final-my-score').innerText = myFinal;
+        document.getElementById('final-opp-score').innerText = oppFinal;
         
-// ❌ UPAR KI EXTRA "}" WALI LINE DELETE KAR DI GAYI HAI
+        let title = document.getElementById('battle-status-title');
+        if(myFinal > oppFinal) { 
+            title.innerText = "🏆 VICTORY!"; title.style.color = "var(--gold)";
+            if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        } else if(myFinal < oppFinal) { 
+            title.innerText = "💀 DEFEAT!"; title.style.color = "var(--danger)";
+            if(settings.vib && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        } else { 
+            title.innerText = "🤝 DRAW!"; title.style.color = "white"; 
+        }
+    }
 
-</script>
-</body>
-</html>
+    function endBattle() {
+        tg.showAlert(`Game Over! Final Score: ${battleScore}`);
+        socket.emit('game_over', {room_id: currentRoom});
+        tab('home');
+    }
 
+    // ============================
+    // 🔍 REVIEW SYSTEM
+    // ============================
+    function showReview() {
+        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+        document.getElementById('review-screen').style.display='flex';
+        let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        if(tabs[0]) tabs[0].classList.add('active');
+        renderReviewData('all');
+    }
+
+    function filterReview(type, btn) {
+        let tabs = document.getElementById('review-screen').querySelectorAll('.lb-tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        renderReviewData(type);
+    }
+
+    function renderReviewData(filterType) {
+        let list = document.getElementById('review-list');
+        list.innerHTML = '';
+        
+        let filteredData = reviewData.filter(item => {
+            if(!item) return false;
+            if (filterType === 'all') return true;
+            if (filterType === 'correct') return item.user_ans === item.ans;
+            if (filterType === 'skipped') return item.user_ans === -1;
+            if (filterType === 'incorrect') return item.user_ans !== item.ans && item.user_ans !== -1;
+            return true;
+        });
+
+        if(filteredData.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#666; margin-top:20px;">No questions found in this category!</div>';
+            return;
+        }
+        
+        filteredData.forEach((item) => {
+            let div = document.createElement('div');
+            div.className = 'q-container';
+            div.style.marginBottom = '15px';
+            div.style.padding = '15px';
+            
+            let originalIndex = reviewData.indexOf(item) + 1;
+            let html = `<div style="font-weight:bold; margin-bottom:10px; font-size:0.95rem;">Q${originalIndex}: ${item.q}</div>`;
+            
+            item.opts.forEach((opt, optIdx) => {
+                let color = '#ddd';
+                let bg = 'rgba(255,255,255,0.03)';
+                let border = '1px solid rgba(255,255,255,0.08)';
+                
+                if (optIdx === item.ans) {
+                    color = 'var(--primary)'; bg = 'rgba(74, 222, 128, 0.1)'; border = '1px solid var(--primary)';
+                } else if (optIdx === item.user_ans && item.user_ans !== item.ans) {
+                    color = 'var(--danger)'; bg = 'rgba(239, 68, 68, 0.1)'; border = '1px solid var(--danger)';
+                }
+                
+                html += `<div style="padding:10px; margin-bottom:5px; border-radius:8px; background:${bg}; border:${border}; color:${color}; font-size:0.85rem;">${opt}</div>`;
+            });
+            
+            if(item.user_ans === -1) {
+                html += `<div style="margin-top:10px; color:var(--gold); font-size:0.8rem; font-weight:bold; text-align:center;">⚠️ SKIPPED</div>`;
+            }
+
+            div.innerHTML = html;
+            list.appendChild(div);
+        });
+    }
+    </script>
+
+                                
 
         
 
