@@ -470,6 +470,20 @@
             </div>
         </div>
 
+
+      <div id="unlimited-setup-screen" class="screen" style="justify-content:center;">
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron'; margin-bottom:10px;">UNLIMITED MODE</h2>
+        <div style="text-align:center; color:#aaa; margin-bottom:30px; font-size:0.9rem;">Choose question sequence</div>
+        
+        <button onclick="startUnlimited(false)" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; font-family:'Orbitron'; margin-bottom:15px; box-shadow:0 0 15px rgba(74,222,128,0.4);">➡️ LINE BY LINE</button>
+        
+        <button onclick="startUnlimited(true)" style="width:100%; padding:18px; background:transparent; border:2px solid var(--primary); border-radius:14px; font-weight:800; color:var(--primary); font-family:'Orbitron'; margin-bottom:15px;">🔀 RANDOM MIX</button>
+        
+        <button onclick="document.getElementById('unlimited-setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
+    </div>
+
+        
+
         <div id="battle-timer-bar" style="width:100%; height:6px; background:var(--gold); margin-bottom:15px; border-radius:10px; transition:0.5s; box-shadow:0 0 10px rgba(255,215,0,0.5);"></div>
         
         <div id="battle-q-area" class="q-container" style="padding:20px;">
@@ -742,15 +756,38 @@
         parent.appendChild(del);
     }
 
+    
     function handleStartClick() {
         if(selChaps.length===0) return tg.showAlert("Select chapters!");
         let ref = fullData; path.forEach(k=> ref=ref[k]);
         let firstChap = selChaps[0]; 
+        
         if(ref[firstChap] && ref[firstChap].mode === 'unlimited') {
-            startUnlimited();
+            // Naya Logic: Seedha start karne ki jagah ab option screen dikhayega
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('unlimited-setup-screen').style.display='flex';
         } else {
             showSetup();
         }
+    }
+
+    // Naya Logic: isRandom argument accept karega
+    function startUnlimited(isRandom) {
+        let ref = fullData; path.forEach(k=> ref=ref[k]);
+        questions = []; 
+        
+        selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
+        
+        if(questions.length===0) return tg.showAlert("No Questions!");
+        
+        // Agar user ne RANDOM MIX select kiya hai, toh array ko shuffle kardo
+        if(isRandom) {
+            questions.sort(() => Math.random() - 0.5);
+        }
+        
+        mode='unlimited'; 
+        window.quizTimerStart = null; 
+        startEngine();
     }
 
     function showSetup() {
@@ -759,15 +796,7 @@
         document.getElementById('setup-screen').style.display='flex';
     }
 
-    function startUnlimited() {
-        let ref = fullData; path.forEach(k=> ref=ref[k]);
-        questions = []; 
-        selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-        if(questions.length===0) return tg.showAlert("No Questions!");
-        mode='unlimited'; 
-        window.quizTimerStart = null; 
-        startEngine();
-    }
+    
 
     function finalStart() {
         let ref = fullData; path.forEach(k=> ref=ref[k]);
