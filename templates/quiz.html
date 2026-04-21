@@ -686,32 +686,62 @@
         });
     }
 
-    function switchTheme(t) {
-        document.body.style.background = (t==='quiz') ? '#080a08' : (t==='prof' ? '#010400' : '#051405');
-        if(document.getElementById('leaves')) document.getElementById('leaves').style.display = (t==='home') ? 'block' : 'none';
-        if(document.getElementById('tree-bg')) document.getElementById('tree-bg').style.display = (t==='prof') ? 'block' : 'none';
-        let dock = document.querySelector('.dock-container');
-        if(dock) dock.style.display = (t==='quiz') ? 'none' : 'flex';
-    }
 
-    function tab(t, btn) {
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        let targetId = t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen');
-        if(document.getElementById(targetId)) document.getElementById(targetId).style.display='flex';
-        document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
-        if(btn) btn.classList.add('active-dock');
-        if(t==='lb') loadLb('daily');
-    }
+        // 1. Theme switcher se dock ka logic hata diya
+        function switchTheme(t) {
+            document.body.style.background = (t==='quiz') ? '#080a08' : (t==='prof' ? '#010400' : '#051405');
+            if(document.getElementById('leaves')) document.getElementById('leaves').style.display = (t==='home') ? 'block' : 'none';
+            if(document.getElementById('tree-bg')) document.getElementById('tree-bg').style.display = (t==='prof') ? 'block' : 'none';
+        }
 
-    function nav(p) { 
-        path=p; 
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        if(document.getElementById('folder-screen')) document.getElementById('folder-screen').style.display='flex';
-        renderFolder(); 
-    }
-    
-    function back() { if(path.length>1) { path.pop(); renderFolder(); } else tab('home'); }
-    
+        // 2. Tab function mein Dock SHOW karne ka logic daala
+        function tab(t, btn) {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            let targetId = t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen');
+            if(document.getElementById(targetId)) document.getElementById(targetId).style.display='flex';
+            document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
+            if(btn) btn.classList.add('active-dock');
+            if(t==='lb') loadLb('daily');
+            
+            // DOCK SIRF IN 3 TABS PAR DIKHEGA
+            let dock = document.querySelector('.dock-container');
+            if(dock) dock.style.display = 'flex';
+        }
+
+        // 3. Nav (Folder open) karte hi Dock HIDE ho jayega
+        function nav(p) { 
+            path=p; 
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            if(document.getElementById('folder-screen')) document.getElementById('folder-screen').style.display='flex';
+            renderFolder(); 
+            
+            // FOLDER MEIN AATE HI DOCK GAYAB
+            let dock = document.querySelector('.dock-container');
+            if(dock) dock.style.display = 'none';
+        }
+        
+        // 4. Back button dabane par wapas Home aur Dock dono aayenge
+        function back() { 
+            if(path.length>1) { 
+                path.pop(); 
+                renderFolder(); 
+            } else { 
+                let homeBtn = document.querySelectorAll('.dock-item')[0]; // Home icon select karega
+                switchTheme('home');
+                tab('home', homeBtn); 
+            } 
+        }
+
+        // 5. Battle Choice screen par bhi Dock HIDE ho jayega
+        function openBattleChoice() {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('battle-choice-screen').style.display='flex';
+            
+            let dock = document.querySelector('.dock-container');
+            if(dock) dock.style.display = 'none';
+        }
+
+        
     function renderFolder() {
         let ref = fullData; path.forEach(k=> ref=ref[k]);
         let list = document.getElementById('folder-list'); 
@@ -1000,6 +1030,9 @@
         document.getElementById('res-time').innerText = duration + "s";
         document.getElementById('res-total').innerText = questions.length;
         selChaps = []; sync(score);
+      let dock = document.querySelector('.dock-container');
+        if(dock) dock.style.display = 'none';
+        
     }
 
     function loadLb(filter, btn) {
