@@ -449,7 +449,7 @@
         <button onclick="leaveLobby()" class="stop-btn" style="border-color:#444; color:#aaa; margin-top:20px;">LEAVE LOBBY</button>
     </div>
 
-    <div id="battle-screen" class="screen">
+        <div id="battle-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:rgba(0,0,0,0.4); border-radius:15px; padding:10px; border:1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5);">
             <div style="display:flex; align-items:center; gap:10px; width:40%;">
                 <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" id="p1-battle-pic" style="width:40px; height:40px; border-radius:50%; border:2px solid var(--primary);">
@@ -470,20 +470,6 @@
             </div>
         </div>
 
-
-      <div id="unlimited-setup-screen" class="screen" style="justify-content:center;">
-        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron'; margin-bottom:10px;">UNLIMITED MODE</h2>
-        <div style="text-align:center; color:#aaa; margin-bottom:30px; font-size:0.9rem;">Choose question sequence</div>
-        
-        <button onclick="startUnlimited(false)" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; font-family:'Orbitron'; margin-bottom:15px; box-shadow:0 0 15px rgba(74,222,128,0.4);">➡️ LINE BY LINE</button>
-        
-        <button onclick="startUnlimited(true)" style="width:100%; padding:18px; background:transparent; border:2px solid var(--primary); border-radius:14px; font-weight:800; color:var(--primary); font-family:'Orbitron'; margin-bottom:15px;">🔀 RANDOM MIX</button>
-        
-        <button onclick="document.getElementById('unlimited-setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
-    </div>
-
-        
-
         <div id="battle-timer-bar" style="width:100%; height:6px; background:var(--gold); margin-bottom:15px; border-radius:10px; transition:0.5s; box-shadow:0 0 10px rgba(255,215,0,0.5);"></div>
         
         <div id="battle-q-area" class="q-container" style="padding:20px;">
@@ -495,6 +481,7 @@
             ⏳ Waiting for opponent...
         </div>
     </div>
+
 
     <div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
@@ -551,6 +538,23 @@
         <button onclick="finalStart()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; font-family:'Orbitron'; margin-top:10px;">EXPAND DOMAIN</button>
         <button onclick="document.getElementById('setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
     </div>
+
+            <div id="setup-screen" class="screen" style="justify-content:center;">
+        ...
+        <button onclick="document.getElementById('setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
+    </div>
+
+    <div id="unlimited-setup-screen" class="screen" style="justify-content:center;">
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron'; margin-bottom:10px;">UNLIMITED MODE</h2>
+        <div style="text-align:center; color:#aaa; margin-bottom:30px; font-size:0.9rem;">Choose question sequence</div>
+        
+        <button onclick="startUnlimited(false)" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; color:black; font-family:'Orbitron'; margin-bottom:15px; box-shadow:0 0 15px rgba(74,222,128,0.4);">➡️ LINE BY LINE</button>
+        
+        <button onclick="startUnlimited(true)" style="width:100%; padding:18px; background:transparent; border:2px solid var(--primary); border-radius:14px; font-weight:800; color:var(--primary); font-family:'Orbitron'; margin-bottom:15px;">🔀 RANDOM MIX</button>
+        
+        <button onclick="document.getElementById('unlimited-setup-screen').style.display='none'; document.getElementById('folder-screen').style.display='flex';" style="width:100%; padding:15px; background:transparent; border:1px solid #444; border-radius:14px; color:#aaa; margin-top:10px;">CANCEL</button>
+    </div>
+
 
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; z-index:2;">
