@@ -505,27 +505,34 @@ def handle_start(data):
     if room_id in ROOMS:
         emit('game_started', {"questions": ROOMS[room_id]["questions"], "timer": ROOMS[room_id]["timer"]}, room=room_id)
 
-@socketio.on('submit_answer')
-def handle_answer(data):
+
+
+
+# --- 1v1 END BATTLE LOGIC ---
+@socketio.on('request_end_battle')
+def handle_end_req(data):
     room_id = data['room_id']
-    uid = data['uid']
-    score = data['score']
-    
-    if room_id in ROOMS:
-        room = ROOMS[room_id]
-        if room["p1"]["id"] == uid: room["p1"]["score"] = score
-        elif room["p2"] and room["p2"]["id"] == uid: room["p2"]["score"] = score
-        
-        emit('opponent_update', {"p1_score": room["p1"]["score"], "p2_score": room["p2"]["score"] if room["p2"] else 0}, room=room_id)
+    uid = data['uid'] # Jisne request ki
+    name = data['name']
+    # Saamne wale player ko prompt bhejo
+    emit('end_battle_prompt', {"msg": f"{name} wants to end the match. Accept?", "by": uid}, room=room_id, include_self=False)
 
-        # Bug Free Question Jump Logic
-        room["answered"].add(uid)
-        if len(room["answered"]) >= 2:
-            room["answered"].clear()
-            emit('next_question', room=room_id)
+@socketio.on('respond_end_battle')
+def handle_end_res(data):
+    room_id = data['room_id']
+    accepted = data['accepted']
+    if accepted:
+        emit('game_over_early', {"msg": "Match ended by mutual agreement"}, room=room_id)
+    else:
+        emit('error', {"msg": "Opponent refused to end the match"}, to=request.sid)
 
-
-
+# --- DISCONNECT LOGIC ---
+@socketio.on('disconnect')
+def handle_disconnect():
+    for room_id, room in list(ROOMS.items()):
+        if room["p1"]["sid"] == request.sid or (room["p2"] and room["p2"]["sid"] == request.sid):
+            emit('player_left', {"msg": "Opponent disconnected. Match ended."}, room=room_id)
+            # Optional: ROOMS.pop(room_id) # Room clean kar sakte hain
 
       
 
