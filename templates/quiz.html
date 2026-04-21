@@ -482,6 +482,9 @@
         </div>
     </div>
 
+    <button onclick="requestEndBattle()" style="width:100%; margin-top:20px; padding:10px; background:transparent; border:1px solid #444; color:#666; border-radius:10px; font-size:0.8rem;">🏳️ END BATTLE</button>
+
+
 
     <div id="battle-result-screen" class="screen" style="justify-content:center; text-align:center;">
         <h2 id="battle-status-title" style="font-family:'Orbitron'; font-size:2rem; margin-bottom:10px;"></h2>
@@ -806,37 +809,29 @@
     }
 
     // Naya Logic: isRandom argument accept karega
-    function startUnlimited(isRandom) {
-        let ref = fullData; path.forEach(k=> ref=ref[k]);
-        questions = []; 
-        
-        selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-        
-        if(questions.length===0) return tg.showAlert("No Questions!");
-        
-        // Agar user ne RANDOM MIX select kiya hai, toh array ko shuffle kardo
-        if(isRandom) {
-            questions.sort(() => Math.random() - 0.5);
-        }
-        
-        mode='unlimited'; 
-        window.quizTimerStart = null; 
-        startEngine();
-    }
-
-    function showSetup() {
-        if(selChaps.length===0) return tg.showAlert("Select chapters!");
-        document.getElementById('folder-screen').style.display='none';
-        document.getElementById('setup-screen').style.display='flex';
-    }
-
     
+            // 1. Unlimited screen se config screen par bhejo
+    function startUnlimited(isRandom) {
+        window.isUnlimitedBuffer = true; // Flag for unlimited mode
+        window.isRandomChoice = isRandom;
+        
+        // Choice screen band karo aur Config screen dikhao
+        document.getElementById('unlimited-setup-screen').style.display = 'none';
+        showSetup();
+    }
 
+    // 2. Final Start (Updated for Unlimited & 1v1 logic)
     function finalStart() {
         let ref = fullData; path.forEach(k=> ref=ref[k]);
         questions = []; 
         selChaps.forEach(k=> { if(ref[k] && ref[k].data) questions.push(...ref[k].data); });
-        questions.sort(()=>Math.random()-0.5); 
+
+        // Apply Shuffling if Unlimited + Random chosen
+        if(window.isUnlimitedBuffer && window.isRandomChoice) {
+            questions.sort(()=>Math.random()-0.5);
+        } else if(!window.isUnlimitedBuffer) {
+            questions.sort(()=>Math.random()-0.5); // Normal mode always random
+        }
         
         let lInput = parseInt(document.getElementById('q-limit').value);
         let tInput = parseInt(document.getElementById('q-timer').value);
@@ -845,18 +840,23 @@
 
         questions = questions.slice(0, limit);
         if(questions.length===0) return tg.showAlert("No Questions!");
-        
+
+        // Battle Mode Logic
         if(window.isBattleMode) {
             socket.emit('create_room', {uid: user.id, name: user.first_name, questions: questions, timer: tm});
             window.isBattleMode = false;
+            window.isUnlimitedBuffer = false; // Reset flags
             document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
             document.getElementById('lobby-screen').style.display='flex';
             document.getElementById('join-area').style.display = 'none';
             document.getElementById('lobby-status').innerHTML = '<div class="waiting-anim">Creating Arena...</div>';
             return;
         }
+
+        window.isUnlimitedBuffer = false; // Reset flags
         mode='normal'; window.quizTimerStart = tm; startEngine();
     }
+
 
     function startMistakes() {
         questions = window.mistakeList;
@@ -1180,12 +1180,16 @@
         }, 1000);
     }
 
+        let battleMistakes = []; // 1v1 mistakes track karne ke liye
+
     function submitBattleAns(idx, correctIdx, btn, e) {
         clearInterval(bTimer); 
         let allBtns = document.querySelectorAll('#battle-opts .opt-btn');
         allBtns.forEach(b => b.onclick = null); 
         
-        let x = e ? e.clientX : window.innerWidth / 2; let y = e ? e.clientY : window.innerHeight / 2;
+        let q = window.battleQs[window.bCurr];
+        let x = e ? e.clientX : window.innerWidth / 2;
+        let y = e ? e.clientY : window.innerHeight / 2;
 
         if(idx !== -1) {
             if(idx === correctIdx) {
@@ -1195,9 +1199,12 @@
                 if(btn) btn.classList.add('wrong');
                 if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
                 battleScore -= 1; showFloatingText(x, y, "-1", "loss");
+                // Track mistake for PDF
+                battleMistakes.push(q);
             }
         } else {
             if(allBtns[correctIdx]) allBtns[correctIdx].classList.add('correct');
+            battleMistakes.push(q); // Skipped is also a mistake
         }
 
         document.getElementById('p1-score').innerText = battleScore;
@@ -1205,15 +1212,7 @@
         document.getElementById('waiting-msg').style.display = 'block';
     }
 
-    socket.on('next_question', () => { setTimeout(() => { window.bCurr++; loadBattleQ(); }, 2000); });
-
-    socket.on('opponent_update', (data) => {
-        let myScore = isHost ? data.p1_score : data.p2_score;
-        let oppScore = isHost ? data.p2_score : data.p1_score;
-        document.getElementById('p1-score').innerText = myScore;
-        document.getElementById('p2-score').innerText = oppScore;
-    });
-
+    // Result screen par sync call karo PDF ke liye
     function showBattleResult() {
         let myFinal = parseInt(document.getElementById('p1-score').innerText);
         let oppFinal = parseInt(document.getElementById('p2-score').innerText);
@@ -1232,7 +1231,20 @@
         } else { 
             title.innerText = "🤝 DRAW!"; title.style.color = "white"; 
         }
+        
+        // Naya Fix: Sync mistakes to get PDF
+        sync_battle_data();
     }
+
+    function sync_battle_data() {
+        // Score 0 bhejenge kyunki battle score alag hota hai, par mistakes bhejenge PDF ke liye
+        fetch('/api/user/sync', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({id: user.id, name: user.first_name, add_score: 0, mistakes: battleMistakes, solved: []})
+        });
+        battleMistakes = []; // Reset
+    }
+
 
     // ============================
     // 🔍 REVIEW SYSTEM
@@ -1302,6 +1314,33 @@
             list.appendChild(div);
         });
     }
+
+    function requestEndBattle() {
+        if(confirm("Send end match request to opponent?")) {
+            socket.emit('request_end_battle', {room_id: currentRoom, uid: user.id, name: user.first_name});
+        }
+    }
+
+    socket.on('end_battle_prompt', (data) => {
+        if(confirm(data.msg)) {
+            socket.emit('respond_end_battle', {room_id: currentRoom, accepted: true});
+        } else {
+            socket.emit('respond_end_battle', {room_id: currentRoom, accepted: false});
+        }
+    });
+
+    socket.on('game_over_early', (data) => {
+        tg.showAlert(data.msg);
+        showBattleResult(); // Seedha result screen
+    });
+
+    socket.on('player_left', (data) => {
+        tg.showAlert(data.msg);
+        showBattleResult(); // Jo score hai uske sath end kardo
+    });
+
+
+        
     </script>
 </body>
 
