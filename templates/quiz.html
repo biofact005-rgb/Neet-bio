@@ -150,27 +150,20 @@
             box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .water-level-container {
-            position: absolute; left: 50%; top: 100%; 
-            width: 700px; height: 700px; margin-left: -350px;
-            z-index: 1;
-            transition: top 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s linear;
-            transform-origin: center 0%;
-        }
+                <div class="water-card">
+            <div class="water-level-container" id="water-container">
+                <div class="water-wave"></div> 
+                <div class="water-wave"></div> 
+                <div class="water-wave"></div> 
+            </div>
+            <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+            <div style="flex:1; z-index:10; padding-left:15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                <span style="background:#00aaff; color:white; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
+                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0; color:white;">Doctor</div>
+                <div style="font-size:0.8rem; color:#e0e0e0;">Level XP: <span id="xp-nums" style="color:#00aaff; font-weight:bold;">0/100</span></div>
+            </div>
+        </div>
 
-        .water-wave {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(180deg, #00aaff 0%, #004466 100%);
-            border-radius: 43%; animation: wave-spin 7s infinite linear; opacity: 0.8;
-        }
-        .water-wave:nth-child(2) {
-            background: rgba(135, 206, 250, 0.4); border-radius: 40%;
-            animation: wave-spin 11s infinite linear reverse; top: -5px; 
-        }
-        .water-wave:nth-child(3) {
-            background: rgba(255, 255, 255, 0.15); border-radius: 45%;
-            animation: wave-spin 15s infinite linear; top: -10px;
-        }
 
         @keyframes wave-spin {
             from { transform: rotate(0deg); }
@@ -384,9 +377,18 @@
             </div>
             <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
             <div style="flex:1; z-index:10; padding-left:15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                <span style="background:#00aaff; color:white; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
-                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0; color:white;">Doctor</div>
-                <div style="font-size:0.8rem; color:#e0e0e0;">Level XP: <span id="xp-nums" style="color:#00aaff; font-weight:bold;">0/100</span></div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="background:#00aaff; color:white; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
+                    <span id="xp-nums" style="color:#fff; font-size: 0.8rem; font-weight:bold;">0/100</span>
+                </div>
+                
+                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:4px 0; color:white;">Doctor</div>
+                
+                <div style="width:100%; height:8px; background:rgba(0,0,0,0.5); border-radius:10px; overflow:hidden; border:1px solid rgba(0, 170, 255, 0.3); margin-top:8px; position:relative;">
+                    <div id="xp-bar-fill" style="width:0%; height:100%; background:linear-gradient(90deg, #00aaff, #00ffcc); border-radius:10px; transition:width 0.8s ease-out; box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);"></div>
+                </div>
+
             </div>
         </div>
 
