@@ -141,6 +141,7 @@
         }
         
                 /* --- REALISTIC BLUE WATER CSS --- */
+                /* --- REALISTIC BLUE WATER CSS (FLAT) --- */
         .water-card {
             width: 100%; height: 170px; position: relative; overflow: hidden;
             background: #021a2b; 
@@ -150,20 +151,27 @@
             box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0,0,0,0.5);
         }
 
-                <div class="water-card">
-            <div class="water-level-container" id="water-container">
-                <div class="water-wave"></div> 
-                <div class="water-wave"></div> 
-                <div class="water-wave"></div> 
-            </div>
-            <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-            <div style="flex:1; z-index:10; padding-left:15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                <span style="background:#00aaff; color:white; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
-                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0; color:white;">Doctor</div>
-                <div style="font-size:0.8rem; color:#e0e0e0;">Level XP: <span id="xp-nums" style="color:#00aaff; font-weight:bold;">0/100</span></div>
-            </div>
-        </div>
+        .water-level-container {
+            position: absolute; left: 50%; top: 100%; 
+            width: 1200px; height: 1200px; margin-left: -600px;
+            z-index: 1;
+            transition: top 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s linear;
+            transform-origin: 50% 0%; 
+        }
 
+        .water-wave {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #00aaff 0%, #004466 100%);
+            border-radius: 40%; animation: wave-spin 10s infinite linear; opacity: 0.8;
+        }
+        .water-wave:nth-child(2) {
+            background: rgba(135, 206, 250, 0.4); border-radius: 42%;
+            animation: wave-spin 14s infinite linear reverse; top: -3px; 
+        }
+        .water-wave:nth-child(3) {
+            background: rgba(255, 255, 255, 0.15); border-radius: 38%;
+            animation: wave-spin 18s infinite linear; top: -6px;
+        }
 
         @keyframes wave-spin {
             from { transform: rotate(0deg); }
@@ -738,13 +746,23 @@
                 if(document.getElementById('u-grade')) document.getElementById('u-grade').innerText = d.grade;
                 if(document.getElementById('xp-nums')) document.getElementById('xp-nums').innerText = `${d.current_xp} / ${d.req_xp}`;
                 
-                                let h = d.percent;
+                            
+
+                let h = d.percent;
                 let topVal = 100 - h; 
                 let container = document.getElementById('water-container');
                 if(container) {
                     container.style.top = topVal + "%";
                 }
+                
+                // NAYA CODE: XP Bar ko fill karne ke liye
+                let xpBar = document.getElementById('xp-bar-fill');
+                if(xpBar) {
+                    xpBar.style.width = h + "%";
+                }
 
+
+                
                 
                 if(d.mistake_count > 0 && document.getElementById('curse-box')) {
                     document.getElementById('curse-box').style.display = 'block';
