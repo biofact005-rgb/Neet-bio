@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NEET Pro App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg-home: #051405; --bg-quiz: #080a08; --bg-prof: #010400; 
+            --primary: #4ade80; --gold: #FFD700; --danger: #ef4444; --text: #f0fdf4;
+            --border: 1px solid rgba(74, 222, 128, 0.25);
+        }
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background: var(--bg-home); color: var(--text); font-family: 'Poppins', sans-serif; margin: 0; height: 100vh; overflow: hidden; position: relative; transition: background 0.6s ease; }
+
+        /* --- 1. ECG HEARTBEAT SPLIT DOOR --- */
+        .door-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; pointer-events: none; }
+        .door-panel { position: absolute; top: 0; width: 100%; height: 100%; background: #000; transition: transform 0.6s cubic-bezier(0.8, 0, 0.2, 1); }
+        .door-left { left: 0; transform: translateX(-100%); clip-path: polygon(0 0, 60% 0, 40% 30%, 70% 40%, 30% 60%, 60% 70%, 40% 100%, 0 100%); border-right: 2px solid var(--primary); }
+        .door-right { right: 0; transform: translateX(100%); clip-path: polygon(100% 0, 60% 0, 40% 30%, 70% 40%, 30% 60%, 60% 70%, 40% 100%, 100% 100%); border-left: 2px solid var(--primary); }
+        .door-closed .door-left { transform: translateX(0); }
+        .door-closed .door-right { transform: translateX(0); }
+        .door-closed { pointer-events: all; }
+
+        /* --- 2. CONFIG PICKER UI --- */
+        .lock-picker { height: 150px; overflow-y: auto; scroll-snap-type: y mandatory; position: relative; text-align: center; border-radius: 12px; background: rgba(0,0,0,0.4); border: 1px solid #333; margin-top: 10px; scrollbar-width: none; }
+        .lock-picker::-webkit-scrollbar { display: none; }
+        .picker-item { height: 50px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: 900; font-family: 'Orbitron'; color: #333; scroll-snap-align: center; transition: 0.2s; }
+        .picker-item.active { color: var(--primary); text-shadow: 0 0 15px rgba(74,128,74,0.5); transform: scale(1.1); }
+        .picker-center-line { position: absolute; top: 50%; left: 0; right: 0; height: 50px; transform: translateY(-50%); border-top: 2px solid var(--primary); border-bottom: 2px solid var(--primary); pointer-events: none; background: rgba(74, 222, 128, 0.05); z-index: 1; }
+        .time-btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .time-btn { flex: 1; padding: 12px 0; background: rgba(255,255,255,0.05); border: 1px solid #444; border-radius: 10px; color: #aaa; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; text-align: center; transition: 0.2s; }
+        .time-btn.active { background: var(--primary); color: #000; border-color: var(--primary); box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
+
+        /* --- 3. COMMON UI --- */
+        .screen { display: none; flex-direction: column; height: 100%; padding: 20px; padding-bottom: 90px; overflow-y: auto; z-index: 5; position: relative; }
+        .water-card { width: 100%; height: 170px; position: relative; overflow: hidden; background: rgba(255,255,255,0.03); border: var(--border); border-radius: 24px; display: flex; align-items: center; padding: 20px; margin-bottom: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .water-wave { position: absolute; bottom: 0; left: 0; width: 200%; height: 0%; background: rgba(74, 222, 128, 0.4); z-index: -1; transition: height 1.2s; border-radius: 40%; animation: wave 8s infinite linear; }
+        @keyframes wave { from { transform: translateX(0) rotate(0deg); } to { transform: translateX(-50%) rotate(360deg); } }
+        .id-pic { width: 75px; height: 75px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; margin-right: 20px; }
+        .allen-btn { width: 100%; padding: 35px; background: linear-gradient(160deg, #0f2e0f, #020a02); border: 1px solid var(--primary); border-radius: 24px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .allen-text { font-family: 'Orbitron'; font-size: 2rem; font-weight: 900; color: var(--primary); letter-spacing: 4px; }
+        .q-container { background: #0f0f0f; border: 1px solid #333; border-radius: 18px; padding: 25px; margin-bottom: 25px; position: relative; }
+        .opt-btn { width: 100%; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; color: #ddd; display: flex; align-items: center; }
+        .correct { background: rgba(74, 222, 128, 0.2) !important; border-color: var(--primary) !important; color: var(--primary); }
+        .wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--danger) !important; color: var(--danger); }
+        .dock-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 350px; height: 70px; background: rgba(5, 12, 5, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 40px; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .dock-item { font-size: 1.6rem; color: #444; transition: 0.3s; }
+        .active-dock { color: var(--primary); transform: translateY(-10px); }
+        .q-palette { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 15px; scrollbar-width: none; }
+        .pal-btn { flex-shrink: 0; width: 45px; height: 45px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; cursor: pointer; }
+        .pal-btn.active { background: var(--primary); color: #000; }
+        .combo-glow { box-shadow: inset 0 0 60px rgba(168, 85, 247, 0.4), 0 0 30px rgba(168, 85, 247, 0.6) !important; border: 2px solid #a855f7 !important; }
+        .leaf { position: absolute; top: -10%; width: 15px; height: 15px; background: rgba(74, 222, 128, 0.2); border-radius: 2px 12px; animation: fall linear infinite; pointer-events: none; }
+        @keyframes fall { 0% { top: -10%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
+        .glass-box { background: rgba(255,255,255,0.02); border: var(--border); border-radius: 16px; padding: 18px; margin-bottom: 15px; }
+        .stop-btn { width: 100%; padding: 16px; margin-top: 25px; background: rgba(239, 68, 68, 0.08); border: 1px solid var(--danger); color: var(--danger); border-radius: 12px; font-weight: bold; font-family: 'Orbitron'; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+    </style>
+</head>
+<body id="body">
+    <div id="door-overlay" class="door-overlay"><div class="door-panel door-left"></div><div class="door-panel door-right"></div></div>
+    <div id="leaves"></div>
+
+    <div id="home-screen" class="screen" style="display:flex;">
+        <h2 style="text-align:center; font-family:'Orbitron'; color:var(--primary); letter-spacing:2px;">NEET PRO</h2>
+        <div class="water-card">
+            <div class="water-wave" id="w1"></div><div class="water-wave" id="w2"></div>
+            <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+            <div style="flex:1; z-index:2;">
+                <span id="u-grade" style="background:var(--primary); color:black; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800;">GRADE 1</span>
+                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0;">Doctor</div>
+                <div style="font-size:0.8rem; color:#aaa;">XP: <span id="xp-nums" style="color:var(--primary);">0/100</span></div>
+            </div>
+        </div>
+        <div class="allen-btn" onclick="transitionTo(['Allen'])"><div class="allen-text">ALLEN</div></div>
+        <div class="allen-btn" onclick="openBattleChoice()" style="margin-top:15px; border-color:var(--gold);"><div class="allen-text" style="color:var(--gold);">1 v 1</div></div>
+        <div class="glass-box" id="curse-box" style="display:none; border-color:var(--danger); text-align:center; margin-top:30px;" onclick="startMistakes()">
+            <div style="color:var(--danger); font-family:'Orbitron';">🚨 WEAK SPOTS: <span id="curse-count">0</span></div>
+        </div>
+        <div id="admin-btn" style="display:none; text-align:center; margin-top:20px;"><button onclick="mode='admin'; nav(['Allen']);">ADMIN</button></div>
+    </div>
+
+    <div id="setup-screen" class="screen" style="justify-content:center;">
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">CONFIG</h2>
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="font-size:0.85rem; color:#aaa;">TOTAL QUESTIONS</div>
+            <div id="total-q-display" style="font-size:2.5rem; font-weight:900; color:var(--gold);">0</div>
+        </div>
+        <div class="glass-box" style="padding:20px;">
+            <label style="color:#aaa; font-size:0.85rem; display:block; text-align:center;">LIMIT</label>
+            <div style="position:relative;"><div class="picker-center-line"></div><div class="lock-picker" id="q-picker" onscroll="updatePickerGlow()"></div></div>
+            <label style="color:#aaa; font-size:0.85rem; display:block; text-align:center; margin-top:25px;">TIMER</label>
+            <div class="time-btn-row">
+                <div class="time-btn" onclick="selectTime(this, 15)">15s</div><div class="time-btn active" onclick="selectTime(this, 30)">30s</div>
+                <div class="time-btn" onclick="selectTime(this, 45)">45s</div><div class="time-btn" onclick="selectTime(this, 60)">60s</div>
+            </div>
+        </div>
+        <button onclick="finalStart()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800;">START</button>
+        <button onclick="tab('home')" style="width:100%; padding:15px; margin-top:10px; background:transparent; border:1px solid #444; color:#aaa;">CANCEL</button>
+    </div>
+
+    <div id="unlimited-setup-screen" class="screen" style="justify-content:center;">
+        <h2 style="text-align:center; color:var(--primary); font-family:'Orbitron';">UNLIMITED</h2>
+        <button onclick="startUnlimited(false)" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; font-weight:800; margin-bottom:15px;">➡️ LINE BY LINE</button>
+        <button onclick="startUnlimited(true)" style="width:100%; padding:18px; background:transparent; border:2px solid var(--primary); border-radius:14px; color:var(--primary); font-weight:800; margin-bottom:15px;">🔀 RANDOM MIX</button>
+        <button onclick="tab('home')" style="width:100%; padding:15px; background:transparent; border:1px solid #444; color:#aaa;">CANCEL</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div id="timer-box" style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:12px;">30s</div>
+            <div style="color:var(--primary); font-family:'Orbitron';">XP: <span id="curr-score">0</span></div>
+        </div>
+        <div id="q-palette" class="q-palette"></div>
+        <div class="q-container" id="main-q-box"><div id="q-txt">Loading...</div></div>
+        <div id="opts"></div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button id="skip-btn" onclick="skipQuestion()" style="flex:1; padding:15px; background:transparent; border:1px solid #666; color:#aaa;">⏭️ SKIP</button>
+            <button id="next-btn" onclick="nextQuestion()" style="flex:1; padding:15px; background:var(--primary); border:none; display:none;">NEXT ➡️</button>
+        </div>
+        <div class="stop-btn" onclick="finishQuiz()">🛑 STOP</div>
+    </div>
+
+    <div id="folder-screen" class="screen">
+        <h3 id="folder-title" style="text-align:center; color:var(--primary);">ARCHIVE</h3>
+        <div id="folder-list"></div>
+        <button id="config-btn" onclick="handleStartClick()" style="width:100%; padding:18px; background:var(--primary); border:none; border-radius:14px; display:none;">CONTINUE</button>
+        <button onclick="transitionTo(null, 'back')" style="width:100%; padding:15px; margin-top:10px; background:transparent; border:1px solid #444;">BACK</button>
+    </div>
+
+    <div id="battle-choice-screen" class="screen" style="justify-content:center;"><button onclick="initCreateRoom()">CREATE ROOM</button><button onclick="initJoinRoom()">JOIN ROOM</button></div>
+    <div id="lobby-screen" class="screen">
+        <div class="glass-box" style="text-align:center;"><div id="lobby-status">...</div><h1 id="room-code-display">----</h1><button onclick="shareRoomLink()">📤 SHARE</button></div>
+        <div id="join-area" style="display:none;"><input type="text" id="join-code-input"><button onclick="joinRoomManual()">JOIN</button></div>
+        <button onclick="tab('home')">LEAVE</button>
+    </div>
+
+    <div id="battle-screen" class="screen">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; background:rgba(0,0,0,0.4); border-radius:15px; padding:10px; border:1px solid #333;">
+            <div style="display:flex; align-items:center; gap:10px; width:40%;"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:40px; border-radius:50%;"><div id="p1-score" style="font-size:1.3rem; color:var(--primary);">0</div></div>
+            <div style="color:var(--gold);">VS</div>
+            <div style="display:flex; align-items:center; gap:10px; width:40%; flex-direction:row-reverse;"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:40px; border-radius:50%;"><div id="p2-score" style="font-size:1.3rem; color:var(--danger);">0</div></div>
+        </div>
+        <div id="battle-timer-bar" style="width:100%; height:6px; background:var(--gold); border-radius:10px; margin-bottom:15px;"></div>
+        <div id="battle-q-area" class="q-container"><div id="battle-q-txt">...</div></div>
+        <div id="battle-opts"></div>
+        <div id="waiting-msg" style="display:none; text-align:center;">⏳ Waiting...</div>
+        <button onclick="requestEndBattle()" class="stop-btn" style="font-size:0.8rem;">🏳️ END BATTLE</button>
+    </div>
+
+    <div class="dock-container">
+        <div class="dock-item active-dock" onclick="tab('home', this)">🏠</div><div class="dock-item" onclick="tab('lb', this)">🏆</div><div class="dock-item" onclick="tab('profile', this)">👤</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand();
+        const user = tg.initDataUnsafe.user || {id: 123456789, first_name: "Doctor"};
+        let fullData = {}, path = [], selChaps = [], questions = [], mistakes = [], reviewData = [];
+        let curr = 0, score = 0, timer = 30, tInt, wrongCount = 0, comboStreak = 0;
+        window.selectedTimer = 30; window.isUnlimitedBuffer = false; window.isRandomChoice = false; window.isBattleMode = false;
+
+        // Init BG
+        const lC = document.getElementById('leaves'); for(let i=0; i<10; i++){ let l=document.createElement('div'); l.className='leaf'; l.style.left=Math.random()*100+'%'; lC.appendChild(l); }
+
+        sync();
+        if(user.id == 8557964907) document.getElementById('admin-btn').style.display='block';
+
+        function tab(t, btn) {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            let targetId = t==='profile'?'profile-screen':(t==='lb'?'lb-screen':'home-screen');
+            if(document.getElementById(targetId)) document.getElementById(targetId).style.display='flex';
+            document.querySelectorAll('.dock-item').forEach(d=>d.classList.remove('active-dock'));
+            if(btn) btn.classList.add('active-dock');
+            document.querySelector('.dock-container').style.display = 'flex';
+        }
+
+        function nav(p) { 
+            path=p; document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('folder-screen').style.display='flex';
+            renderFolder(); document.querySelector('.dock-container').style.display = 'none';
+        }
+
+        function back() { if(path.length>1) { path.pop(); renderFolder(); } else tab('home'); }
+
+        function transitionTo(p, action) {
+            let door = document.getElementById('door-overlay'); door.classList.add('door-closed');
+            setTimeout(() => { if(action === 'back') back(); else nav(p); setTimeout(() => door.classList.remove('door-closed'), 500); }, 600);
+        }
+
+        function selectTime(btn, t) { document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); window.selectedTimer = t; }
+
+        function showSetup() {
+            if(selChaps.length===0) return;
+            let ref = fullData; path.forEach(k=> ref=ref[k]);
+            let totalQs = 0; selChaps.forEach(k => { if(ref[k]) totalQs += ref[k].data.length; });
+            document.getElementById('total-q-display').innerText = totalQs;
+            let picker = document.getElementById('q-picker'); picker.innerHTML = '<div style="height:50px;"></div>';
+            for(let i=1; i<=Math.floor(totalQs/10); i++){ let d=document.createElement('div'); d.className='picker-item'; d.innerText=i*10; picker.appendChild(d); }
+            if(totalQs%10!==0 || totalQs<10){ let d=document.createElement('div'); d.className='picker-item'; d.innerText=totalQs; picker.appendChild(d); }
+            picker.innerHTML += '<div style="height:50px;"></div>';
+            setTimeout(updatePickerGlow, 100);
+            document.getElementById('folder-screen').style.display='none'; document.getElementById('setup-screen').style.display='flex';
+        }
+
+        function updatePickerGlow() {
+            let p = document.getElementById('q-picker'); let items = p.querySelectorAll('.picker-item');
+            let center = Math.round(p.scrollTop/50); items.forEach((it, idx) => { if(idx===center) it.classList.add('active'); else it.classList.remove('active'); });
+        }
+
+        function handleStartClick() {
+            let ref = fullData; path.forEach(k=> ref=ref[k]);
+            if(ref[selChaps[0]] && ref[selChaps[0]].mode === 'unlimited') {
+                document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+                document.getElementById('unlimited-setup-screen').style.display='flex';
+            } else { showSetup(); }
+        }
+
+        function startUnlimited(isR) { window.isUnlimitedBuffer=true; window.isRandomChoice=isR; document.getElementById('unlimited-setup-screen').style.display='none'; showSetup(); }
+
+        function finalStart() {
+            let ref = fullData; path.forEach(k=> ref=ref[k]); questions = []; 
+            selChaps.forEach(k=> { if(ref[k]) questions.push(...ref[k].data); });
+            if(window.isUnlimitedBuffer && window.isRandomChoice) questions.sort(()=>Math.random()-0.5);
+            let activeLimit = document.getElementById('q-picker').querySelector('.picker-item.active');
+            let limit = activeLimit ? parseInt(activeLimit.innerText) : 20;
+            questions = questions.slice(0, limit);
+            if(window.isBattleMode) { socket.emit('create_room', {uid: user.id, name: user.first_name, questions: questions, timer: window.selectedTimer}); return; }
+            mode='normal'; window.quizTimerStart = window.selectedTimer; startEngine();
+        }
+
+        function startEngine() {
+            document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+            document.getElementById('game-screen').style.display='flex';
+            document.querySelector('.dock-container').style.display = 'none';
+            curr=0; score=0; comboStreak=0; reviewData = questions.map(q=>({q:q.q, opts:q.opts, ans:q.ans, user_ans:null}));
+            loadQ();
+        }
+
+        function loadQ() {
+            if(curr>=questions.length) return finishQuiz();
+            let q = questions[curr]; document.getElementById('q-txt').innerText = q.q;
+            let pal = document.getElementById('q-palette'); pal.innerHTML='';
+            questions.forEach((_,i)=>{ let b=document.createElement('div'); b.className='pal-btn'; b.innerText=i+1; if(i===curr) b.classList.add('active'); pal.appendChild(b); });
+            let optD = document.getElementById('opts'); optD.innerHTML='';
+            q.opts.forEach((o,i)=>{ let b=document.createElement('div'); b.className='opt-btn'; b.innerText=o; b.onclick=(e)=>check(i,b,e); optD.appendChild(b); });
+            timer = window.quizTimerStart; tInt = setInterval(()=>{ document.getElementById('timer-box').innerText=timer+'s'; if(timer--<=0){ clearInterval(tInt); check(-1,null); } }, 1000);
+        }
+
+        function check(i, btn, ev) {
+            clearInterval(tInt); let q = questions[curr];
+            if(i === q.ans) { if(btn) btn.classList.add('correct'); score+=4; } 
+            else { if(btn) btn.classList.add('wrong'); score-=1; mistakes.push(q); }
+            document.getElementById('curr-score').innerText = score;
+            setTimeout(nextQuestion, 1000);
+        }
+
+        function nextQuestion() { curr++; loadQ(); }
+        function skipQuestion() { clearInterval(tInt); curr++; loadQ(); }
+        function finishQuiz() { tab('home'); sync(score); }
+
+        function sync(s=0) {
+            fetch('/api/get_data').then(r=>r.json()).then(d=> fullData=d);
+            fetch('/api/user/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: user.id, name: user.first_name, add_score: s, mistakes: mistakes}) })
+            .then(r=>r.json()).then(d => {
+                document.getElementById('u-grade').innerText = d.grade;
+                document.getElementById('xp-nums').innerText = `${d.current_xp}/${d.req_xp}`;
+                document.getElementById('w1').style.height = d.percent+"%";
+                if(d.mistake_count > 0) { document.getElementById('curse-box').style.display='block'; document.getElementById('curse-count').innerText=d.mistake_count; }
+                mistakes=[];
+            });
+        }
+
+        // 1v1 Logic (Socket Stub)
+        const socket = io();
+        function openBattleChoice() { document.querySelectorAll('.screen').forEach(s=>s.style.display='none'); document.getElementById('battle-choice-screen').style.display='flex'; document.querySelector('.dock-container').style.display='none'; }
+        function initCreateRoom() { window.isBattleMode=true; nav(['Allen']); }
+        function initJoinRoom() { document.querySelectorAll('.screen').forEach(s=>s.style.display='none'); document.getElementById('lobby-screen').style.display='flex'; document.getElementById('join-area').style.display='block'; }
+        socket.on('room_created', d => { document.getElementById('room-code-display').innerText=d.room_id; document.getElementById('lobby-status').innerText="Waiting..."; });
+        function requestEndBattle() { if(confirm("End match?")) socket.emit('request_end_battle', {room_id: currentRoom, uid: user.id, name: user.first_name}); }
+        socket.on('game_started', d => { document.querySelectorAll('.screen').forEach(s=>s.style.display='none'); document.getElementById('battle-screen').style.display='flex'; });
+    </script>
+</body>
+</html>
