@@ -71,7 +71,7 @@ def check_membership(user_id):
 def get_join_markup():
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("📢 Join Channel (Must)", url=CHANNEL_LINK))
-    markup.add(InlineKeyboardButton("🔄 Check Status", callback_data="check_sub"))
+    markup.add(InlineKeyboardButton(" VERIFY ✅", callback_data="check_sub"))
     return markup
 
 # ==========================================
@@ -122,22 +122,22 @@ def send_welcome_menu(chat_id, first_name, user_id):
     markup = InlineKeyboardMarkup()
     
     # Colorful Buttons
-    markup.add(InlineKeyboardButton("🧬 𝗢𝗣𝗘𝗡 𝗡𝗘𝗘𝗧 𝗣𝗥𝗢 🧬", web_app=WebAppInfo(url=app_url)))
+    markup.add(InlineKeyboardButton("🧬 START 🧬", web_app=WebAppInfo(url=app_url)))
     markup.row(
         InlineKeyboardButton("📢 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗖𝗵𝗮𝗻𝗻𝗲𝗹", url=CHANNEL_LINK1),
-        InlineKeyboardButton("👨‍⚕️ 𝗛𝗲𝗹𝗽 𝗖𝗲𝗻𝘁𝗲𝗿", url="https://t.me/errorkid_05")
+        InlineKeyboardButton("👨‍⚕️ 𝗛𝗲𝗹𝗽 𝗖𝗲𝗻𝘁𝗲𝗿", url="https://t.me/errorkidk")
     )
 
     # Yahan Gojo ya apni image ka direct link dalo
     image_url = "https://telegra.ph/file/09e9929cb79e7a83d739f.jpg" 
     
     # Blockquote ke liye HTML tags use kiye hain
-    caption = f"🏆 <b>𝗘𝗿𝗿𝗼𝗿 𝗢𝗦𝗜𝗡𝗧 𝗧𝗲𝗿𝗺𝗶𝗻𝗮𝗹</b> 🏆\n\n" \
-              f"👤 <b>User:</b> {first_name}\n" \
+    caption = f"🏆 <b>QUIZ PRO 🧾 </b> 🏆\n\n" \
+              f"<blockquote>👤 <b>User:</b> {first_name}\n" \
               f"🆔 <b>ID:</b> <code>{user_id}</code>\n" \
-              f"👑 <b>Status:</b> Premium Access\n\n" \
-              f"<blockquote>💬 <b>SYSTEM READY.</b>\n" \
-              f"Select a module below, or simply open the app to start your mock test.</blockquote>"
+              f"👑 <b>Status:</b> Premium Access</blockquote>\n" \
+              f"<blockquote>💬 <b> BOT LIVE. </b>\n" \
+              f"click below to start our mini app.</blockquote>"
 
     try:
         # Photo + HTML parse mode
