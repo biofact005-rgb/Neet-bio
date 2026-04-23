@@ -141,7 +141,8 @@
         }
         
                 /* --- REALISTIC BLUE WATER CSS --- */
-                /* --- REALISTIC BLUE WATER CSS (FLAT) --- */
+                
+        /* --- REALISTIC BLUE WATER CSS (FIXED WAVES) --- */
         .water-card {
             width: 100%; height: 170px; position: relative; overflow: hidden;
             background: #021a2b; 
@@ -153,30 +154,33 @@
 
         .water-level-container {
             position: absolute; left: 50%; top: 100%; 
-            width: 1200px; height: 1200px; margin-left: -600px;
+            width: 1000px; height: 1000px; margin-left: -500px;
             z-index: 1;
             transition: top 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s linear;
-            transform-origin: 50% 0%; 
+            /* transform-origin center rakha hai taaki swing na kare */
+            transform-origin: 50% 50%; 
         }
 
+        /* Sabhi layers ko ek sath lock kar diya hai top: 0 karke */
         .water-wave {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(180deg, #00aaff 0%, #004466 100%);
-            border-radius: 40%; animation: wave-spin 10s infinite linear; opacity: 0.8;
+            border-radius: 43%; animation: wave-spin 12s infinite linear; opacity: 1;
         }
         .water-wave:nth-child(2) {
-            background: rgba(135, 206, 250, 0.4); border-radius: 42%;
-            animation: wave-spin 14s infinite linear reverse; top: -3px; 
+            background: rgba(135, 206, 250, 0.4); border-radius: 44%;
+            animation: wave-spin 15s infinite linear reverse; top: 0; 
         }
         .water-wave:nth-child(3) {
-            background: rgba(255, 255, 255, 0.15); border-radius: 38%;
-            animation: wave-spin 18s infinite linear; top: -6px;
+            background: rgba(255, 255, 255, 0.15); border-radius: 45%;
+            animation: wave-spin 20s infinite linear; top: 0;
         }
 
         @keyframes wave-spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        
         .water-card::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
