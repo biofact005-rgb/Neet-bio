@@ -140,26 +140,48 @@
             z-index: 5; position: relative; 
         }
         
+                /* --- REALISTIC BLUE WATER CSS --- */
         .water-card {
             width: 100%; height: 170px; position: relative; overflow: hidden;
-            background: rgba(255,255,255,0.03); border: var(--border); border-radius: 24px;
+            background: #021a2b; 
+            border: 1px solid rgba(0, 170, 255, 0.3); 
+            border-radius: 24px;
             display: flex; align-items: center; padding: 20px; margin-bottom: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0,0,0,0.5);
         }
+
+        .water-level-container {
+            position: absolute; left: 50%; top: 100%; 
+            width: 700px; height: 700px; margin-left: -350px;
+            z-index: 1;
+            transition: top 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s linear;
+            transform-origin: center 0%;
+        }
+
         .water-wave {
-            position: absolute; bottom: 0; left: 0; width: 200%; height: 0%; 
-            background: rgba(74, 222, 128, 0.4); z-index: -1; 
-            transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 40%; animation: wave 8s infinite linear;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #00aaff 0%, #004466 100%);
+            border-radius: 43%; animation: wave-spin 7s infinite linear; opacity: 0.8;
         }
-        .water-wave:nth-child(2) { 
-            background: rgba(74, 222, 128, 0.15); border-radius: 35%; 
-            animation: wave 12s infinite linear reverse; 
+        .water-wave:nth-child(2) {
+            background: rgba(135, 206, 250, 0.4); border-radius: 40%;
+            animation: wave-spin 11s infinite linear reverse; top: -5px; 
         }
-        @keyframes wave { 
-            from { transform: translateX(0) rotate(0deg); } 
-            to { transform: translateX(-50%) rotate(360deg); } 
+        .water-wave:nth-child(3) {
+            background: rgba(255, 255, 255, 0.15); border-radius: 45%;
+            animation: wave-spin 15s infinite linear; top: -10px;
         }
+
+        @keyframes wave-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .water-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            z-index: 5; pointer-events: none;
+        }
+
         
         .id-pic { 
             width: 75px; height: 75px; border-radius: 50%; border: 3px solid var(--primary); 
@@ -354,16 +376,20 @@
     <div id="home-screen" class="screen" style="display:flex;">
         <h2 style="text-align:center; font-family:'Orbitron'; color:var(--primary); letter-spacing:2px; text-shadow:0 0 20px rgba(74,222,128,0.2);">NEET PRO</h2>
         
-        <div class="water-card">
-            <div class="water-wave" id="w1"></div>
-            <div class="water-wave" id="w2"></div>
+                <div class="water-card">
+            <div class="water-level-container" id="water-container">
+                <div class="water-wave"></div> 
+                <div class="water-wave"></div> 
+                <div class="water-wave"></div> 
+            </div>
             <img id="u-pic" class="id-pic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-            <div style="flex:1; z-index:2; padding-left:15px;">
-                <span style="background:var(--primary); color:black; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
-                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0;">Doctor</div>
-                <div style="font-size:0.8rem; color:#aaa;">Level XP: <span id="xp-nums" style="color:var(--primary);">0/100</span></div>
+            <div style="flex:1; z-index:10; padding-left:15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                <span style="background:#00aaff; color:white; padding:3px 10px; border-radius:6px; font-size:0.7rem; font-weight:800; font-family:'Orbitron';" id="u-grade">GRADE 1</span>
+                <div id="u-name" style="font-size:1.4rem; font-weight:700; margin:5px 0; color:white;">Doctor</div>
+                <div style="font-size:0.8rem; color:#e0e0e0;">Level XP: <span id="xp-nums" style="color:#00aaff; font-weight:bold;">0/100</span></div>
             </div>
         </div>
+
 
         <div style="margin-top:20px;">
             <div class="allen-btn" onclick="transitionTo(['Allen'])">
@@ -710,9 +736,13 @@
                 if(document.getElementById('u-grade')) document.getElementById('u-grade').innerText = d.grade;
                 if(document.getElementById('xp-nums')) document.getElementById('xp-nums').innerText = `${d.current_xp} / ${d.req_xp}`;
                 
-                let h = d.percent;
-                if(document.getElementById('w1')) document.getElementById('w1').style.height = h + "%";
-                if(document.getElementById('w2')) document.getElementById('w2').style.height = h + "%";
+                                let h = d.percent;
+                let topVal = 100 - h; 
+                let container = document.getElementById('water-container');
+                if(container) {
+                    container.style.top = topVal + "%";
+                }
+
                 
                 if(d.mistake_count > 0 && document.getElementById('curse-box')) {
                     document.getElementById('curse-box').style.display = 'block';
@@ -1630,6 +1660,29 @@
                 list.appendChild(div);
             });
         }
+
+               // ==========================================
+        // 🌊 GRAVITY WATER LOGIC
+        // ==========================================
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', function(event) {
+                let gamma = event.gamma; 
+                
+                if (gamma !== null && gamma !== undefined) {
+                    let tiltAngle = -gamma; 
+                    
+                    if (tiltAngle > 45) tiltAngle = 45;
+                    if (tiltAngle < -45) tiltAngle = -45;
+                    
+                    let container = document.getElementById('water-container');
+                    if (container) {
+                        container.style.transform = `rotate(${tiltAngle}deg)`;
+                    }
+                }
+            });
+        }
+
+        
     </script>
 </body>
 </html>
