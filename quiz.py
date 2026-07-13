@@ -20,8 +20,8 @@ WEB_APP_URL = os.getenv("WEB_APP_URL", "https://your-app.onrender.com")
 ADMIN_ID = 8718760365
 
 # Channel Details for Verification
-CHANNEL_USERNAME = "@errorkid_05" 
-CHANNEL_LINK = "https://t.me/errorkid_05"
+CHANNEL_USERNAME = "@errorkids" 
+CHANNEL_LINK = "https://t.me/errorkids"
 CHANNEL_LINK1 = "https://t.me/+xHIueY41U3syODE1"
 
 MONGO_URI = os.getenv("MONGO_URI")
