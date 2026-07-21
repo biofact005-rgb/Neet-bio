@@ -303,11 +303,21 @@ def handle_docs(message):
                 text = text.replace('\\n', '<br>').replace('\\t', '&nbsp;&nbsp;&nbsp;')
                 return text.strip()
 
+            # TEXT CLEANUP FUNCTION
+            def clean_html(text):
+                if not text: return ""
+                text = str(text)
+                if text.startswith('"') and text.endswith('"'):
+                    try: text = json.loads(text)
+                    except: text = text[1:-1]
+                text = text.replace('\\/', '/').replace('\\"', '"')
+                text = text.replace('\\n', '<br>').replace('\\t', '&nbsp;&nbsp;&nbsp;')
+                return text.strip()
+
             def search_for_questions(node):
                 if isinstance(node, dict):
                     if 'qns_content' in node and 'options' in node:
                         try:
-                            # Unique ID nikalna taaki 60 ke 60 alag extract hon
                             q_id = node.get('id') or node.get('unique_identifier')
                             raw_text = node.get('qns_content', {}).get('text', '')
                             cleaned_q = clean_html(raw_text)
@@ -318,6 +328,9 @@ def handle_docs(message):
                                 seen_ids.add(q_id)
                                 opts = [clean_html(opt.get('text', '')) for opt in node.get('options', [])]
                                 
+                                # 🔥 Difficulty Extract Yahan Ho Rahi Hai
+                                diff = node.get('difficulty', 'EASY') 
+                                
                                 ans_index = 0
                                 ans_str = node.get('answer', '[]')
                                 if ans_str and str(ans_str).strip() not in ['[]', '""', 'null', 'None']:
@@ -327,7 +340,8 @@ def handle_docs(message):
                                     except: pass
                                 
                                 if len(opts) >= 4:
-                                    questions.append({"q": cleaned_q, "opts": opts[:4], "ans": ans_index})
+                                    # "diff" ko JSON me save kar rahe hain
+                                    questions.append({"q": cleaned_q, "opts": opts[:4], "ans": ans_index, "diff": diff})
                         except Exception as e:
                             print(f"Error parsing question: {e}")
                     else:
