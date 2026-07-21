@@ -278,7 +278,12 @@ def handle_docs(message):
             return
             
         # --- 2. 👽 ALIAN 2.0 (DIRECT JSON UPLOAD) ---
-        if message.document.file_name.endswith('.json') and message.caption and '|' in message.caption:
+        if message.document.file_name.endswith('.json'):
+            # Agar user ne caption nahi diya, toh error do taaki txt parser me na jaye
+            if not message.caption or '|' not in message.caption:
+                bot.reply_to(message, "❌ **Caption Missing ya Galat hai!**\n\nFile upload karte waqt caption me path dena zaruri hai.\nExample: `Alian 2.0 | Botany | Cell Biology`")
+                return
+            
             data = json.loads(downloaded.decode('utf-8'))
             
             parts = [p.strip() for p in message.caption.split('|')]
@@ -287,38 +292,56 @@ def handle_docs(message):
             chapter = parts[2] if len(parts) > 2 else f"Test_{int(time.time())}"
             
             questions = []
-            q_list = data.get('data', {}).get('questions', []) 
             
-            for item in q_list:
-                try:
-                    content_node = item.get('content', {})
-                    raw_text = content_node.get('qns_content', {}).get('text', '')
-                    if raw_text.startswith('"') and raw_text.endswith('"'):
-                        raw_text = raw_text[1:-1]
-                    
-                    opts = [opt['text'] for opt in content_node.get('options', [])]
-                    
-                    ans_index = 0
-                    ans_str = content_node.get('answer', '[]')
-                    if ans_str and ans_str not in ['[]', '""']:
+            # 🔥 SUPER JSON EXTRACTOR (Recursive Search)
+            # Ye function json me kahin bhi question chhipa ho, nikal lega
+            def search_for_questions(node):
+                if isinstance(node, dict):
+                    # Agar node me qns_content aur options dono hain, matlab yehi question hai!
+                    if 'qns_content' in node and 'options' in node:
                         try:
-                            ans_list = json.loads(ans_str) 
-                            if len(ans_list) > 0: ans_index = int(ans_list[0])
-                        except: pass
-                    
-                    if len(opts) >= 4:
-                        questions.append({"q": raw_text, "opts": opts[:4], "ans": ans_index})
-                        
-                except Exception as e:
-                    print(f"Question skip hua: {e}")
+                            raw_text = node.get('qns_content', {}).get('text', '')
+                            if raw_text.startswith('"') and raw_text.endswith('"'):
+                                raw_text = raw_text[1:-1]
+                            
+                            opts = [opt['text'] for opt in node.get('options', [])]
+                            
+                            ans_index = 0
+                            ans_str = node.get('answer', '[]')
+                            if ans_str and str(ans_str).strip() not in ['[]', '""', 'null', 'None']:
+                                try:
+                                    ans_list = json.loads(str(ans_str)) 
+                                    if len(ans_list) > 0: ans_index = int(ans_list[0])
+                                except: pass
+                            
+                            # Valid options check karke array me daalo
+                            if len(opts) >= 4:
+                                questions.append({"q": raw_text, "opts": opts[:4], "ans": ans_index})
+                        except Exception as e:
+                            print(f"Error parsing question: {e}")
+                    else:
+                        # Dictionary me aage dhundo
+                        for k, v in node.items():
+                            search_for_questions(v)
+                elif isinstance(node, list):
+                    # List ke andar aage dhundo
+                    for item in node:
+                        search_for_questions(item)
+            
+            # Extractor ko run karo
+            search_for_questions(data)
                     
             if len(questions) > 0:
+                # Duplicates remove karne ka hack
+                unique_qs = {q['q']: q for q in questions}.values()
+                final_questions = list(unique_qs)
+
                 filter_q = {"source": source, "type": typ, "chapter": chapter}
-                update_q = {"$set": {"source": source, "type": typ, "chapter": chapter, "mode": "alian", "data": questions}}
+                update_q = {"$set": {"source": source, "type": typ, "chapter": chapter, "mode": "alian", "data": final_questions}}
                 questions_col.update_one(filter_q, update_q, upsert=True)
-                bot.reply_to(message, f"👽 **ALIAN 2.0 Uploaded Successfully!**\n\n📁 Path: {source} -> {typ} -> {chapter}\n✅ Qs Saved: {len(questions)}")
+                bot.reply_to(message, f"👽 **ALIAN 2.0 Uploaded Successfully!**\n\n📁 Path: {source} -> {typ} -> {chapter}\n✅ Qs Saved: {len(final_questions)}")
             else:
-                bot.reply_to(message, "❌ Invalid JSON! No questions found.")
+                bot.reply_to(message, "❌ Invalid JSON! Is file me koi valid questions nahi mile.")
             return
 
         # --- 3. OLD LOGIC (.txt file upload for Allen) ---
@@ -335,7 +358,6 @@ def handle_docs(message):
 
     except Exception as e:
         bot.reply_to(message, f"❌ Error: {e}")
-        
 
 # ==========================================
 # 🌐 API ROUTES (UNCHANGED)
