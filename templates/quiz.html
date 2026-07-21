@@ -379,6 +379,23 @@
         .pal-btn.solved { background: rgba(74, 222, 128, 0.2); border-color: var(--primary); color: var(--primary); }
         .pal-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger); }
         .pal-btn.skipped { background: rgba(255, 215, 0, 0.2); border-color: var(--gold); color: var(--gold); }
+    
+    /* --- DIFFICULTY TAGS --- */
+.diff-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.diff-easy { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }
+.diff-medium { background: rgba(255, 215, 0, 0.15); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.5); }
+.diff-hard { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5); }
+    
     </style>
 </head>
 
@@ -1143,8 +1160,19 @@
             if(curr>=questions.length) return finishQuiz();
             
             let q = questions[curr];
-            // innerHTML allows HTML tags for Match the column and Assertions
-            document.getElementById('q-txt').innerHTML = q.q;
+            
+            // 🔥 Difficulty Tag render logic
+            let diffHtml = '';
+            if(q.diff) {
+                let dClass = 'diff-easy';
+                let dText = q.diff.toLowerCase();
+                if(dText === 'medium') dClass = 'diff-medium';
+                else if(dText === 'hard' || dText === 'tough') dClass = 'diff-hard';
+                diffHtml = `<div class="diff-tag ${dClass}">${q.diff}</div><br>`;
+            }
+            
+            // Tag aur Question dono ek sath print honge
+            document.getElementById('q-txt').innerHTML = diffHtml + q.q; 
             
             renderPalette(); 
             
