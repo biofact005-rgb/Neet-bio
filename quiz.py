@@ -252,7 +252,7 @@ def export_backup(message):
         bot.reply_to(message, f"❌ Backup Failed: {str(e)}")
 
 
-    @bot.message_handler(content_types=['document'])
+@bot.message_handler(content_types=['document'])
 def handle_docs(message):
     if str(message.from_user.id) != str(ADMIN_ID): return 
     if not db_connected: 
