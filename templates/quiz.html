@@ -198,19 +198,31 @@
         }
 
         /* --- ALIAN 2.0 MATCH THE COLUMN TABLE DESIGN --- */
-        .q-container table {
-            width: 100% !important; border-collapse: collapse; margin: 15px 0;
-            background: rgba(168, 85, 247, 0.05); border-radius: 8px; overflow: hidden;
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
-        }
-        .q-container th, .q-container td {
-            border: 1px solid rgba(168, 85, 247, 0.4) !important;
-            padding: 10px; text-align: center; vertical-align: middle;
-            color: #e2e8f0; font-size: 0.9rem;
-        }
-        .q-container tr:nth-child(even) { background: rgba(168, 85, 247, 0.1); }
-        .q-container strong { color: #a855f7; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
-
+      /* --- ALIAN 2.0 MATCH THE COLUMN TABLE DESIGN --- */
+.q-container table {
+    display: block !important;
+    overflow-x: auto !important; /* SIDE SCROLLING YAHAN SE AAYEGI */
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    border-collapse: collapse; 
+    margin: 15px 0;
+    background: rgba(168, 85, 247, 0.05); 
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+    -webkit-overflow-scrolling: touch; /* Phone me smooth scroll ke liye */
+}
+.q-container th, .q-container td {
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+    padding: 12px; 
+    text-align: center; 
+    vertical-align: middle;
+    color: #e2e8f0; 
+    font-size: 0.9rem;
+    white-space: normal; /* Table scroll hogi par column text proper dikhega */
+    min-width: 100px; /* Column pichkenge nahi */
+}
+.q-container tr:nth-child(even) { background: rgba(168, 85, 247, 0.1); }
+.q-container strong { color: #a855f7; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }  
         /* --- QUIZ UI --- */
         .q-container { 
             background: #0f0f0f; border: 1px solid #333; border-radius: 18px; 
