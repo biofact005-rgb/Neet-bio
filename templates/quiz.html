@@ -134,11 +134,34 @@
             opacity: 0.1; pointer-events: none; z-index: 0; filter: invert(1);
         }
 
-        .screen { 
-            display: none; flex-direction: column; height: 100%; 
-            padding: 20px; padding-bottom: 90px; overflow-y: auto; 
-            z-index: 5; position: relative; 
-        }
+        /* Purana screen class update karein */
+.screen { 
+    display: none; flex-direction: column; height: 100%; 
+    padding: 20px; padding-bottom: 90px; overflow-y: auto; 
+    overflow-x: hidden; /* Yeh bahar jaane se rokega */
+    z-index: 5; position: relative; 
+}
+
+/* --- YEH NAYA CODE ADD KAREIN --- */
+/* Ye code kisi bhi box ya timer ko dabne (shrink) nahi dega */
+.screen > * {
+    flex-shrink: 0;
+}
+
+/* Lamba question screen ke hisaab se adjust hoga */
+#q-txt, #battle-q-txt {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    width: 100%;
+}
+
+/* Options chote hone par auto-expand honge */
+.opt-btn {
+    height: auto !important;
+    min-height: 55px; /* Kam se kam itni height rahegi */
+    word-wrap: break-word; /* Text lamba hone par agli line me jayega */
+    white-space: normal;
+}
         
                 /* --- REALISTIC BLUE WATER CSS --- */
                 
@@ -615,10 +638,19 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); 
-        tg.setHeaderColor('#051405');
         
+        const tg = window.Telegram.WebApp;
+tg.expand(); 
+tg.setHeaderColor('#051405');
+
+// --- FULL SCREEN & DRAG LOCK (Naya Code) ---
+tg.ready();
+if (tg.isVersionAtLeast("7.7")) {
+    tg.disableVerticalSwipes(); // Swipe down se mini-app close hona band karega
+}
+if (tg.isVersionAtLeast("8.0") && tg.requestFullscreen) {
+    tg.requestFullscreen(); // Naya telegram update ise bilkul Full Screen kar dega
+}
         const user = tg.initDataUnsafe.user || {id: 123, first_name: "Doctor"};
 
         // LEAF ANIMATION
@@ -692,19 +724,53 @@
         }
 
         function transitionTo(p, action) {
-            let door = document.getElementById('door-overlay');
-            if(door) door.classList.add('door-closed');
-            setTimeout(() => {
-                if(action === 'back') {
-                    back(); 
-                } else {
-                    nav(p);
-                }
-                setTimeout(() => { 
-                    if(door) door.classList.remove('door-closed'); 
-                }, 500);
-            }, 600);
+    // Check kar rahe hain ki kya hum Home Screen par jaa rahe hain
+    let isGoingHome = (action === 'back' && path.length <= 1);
+    
+    if (isGoingHome) {
+        // ---> DOOR ANIMATION (Sirf Home par aate waqt)
+        let door = document.getElementById('door-overlay');
+        if(door) door.classList.add('door-closed');
+        setTimeout(() => {
+            if(action === 'back') {
+                back(); 
+            } else {
+                nav(p);
+            }
+            setTimeout(() => { 
+                if(door) door.classList.remove('door-closed'); 
+            }, 500);
+        }, 600);
+    } else {
+        // ---> SIMPLE FADE ANIMATION (Folders ke beech me navigation ke liye)
+        let fade = document.getElementById('fade-overlay');
+        
+        // Agar pehle se fade overlay nahi hai, toh automatically bana dega
+        if(!fade) {
+            fade = document.createElement('div');
+            fade.id = 'fade-overlay';
+            fade.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #051405; z-index: 9998; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;";
+            document.body.appendChild(fade);
         }
+        
+        // Fade in karo
+        fade.style.opacity = '1';
+        fade.style.pointerEvents = 'all';
+        
+        // Screen change karo aur Fade out karo
+        setTimeout(() => {
+            if(action === 'back') {
+                back(); 
+            } else {
+                nav(p);
+            }
+            setTimeout(() => { 
+                fade.style.opacity = '0'; 
+                fade.style.pointerEvents = 'none'; 
+            }, 100);
+        }, 250); // 250ms ki speed fast aur smooth lagegi
+    }
+}
 
         function sync(addScore=0) {
             fetch('/api/get_data')
