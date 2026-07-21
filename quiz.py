@@ -288,22 +288,9 @@ def handle_docs(message):
             chapter = parts[2] if len(parts) > 2 else f"Test_{int(time.time())}"
             
             questions = []
-            seen_ids = set() # Duplicate rokne ke liye asli ID use karenge
+            seen_ids = set() # Asli Unique ID store karne ke liye
             
-            # TEXT CLEANUP FUNCTION (Tags fix karne ke liye)
-            def clean_html(text):
-                if not text: return ""
-                text = str(text)
-                # Double encoded string fix
-                if text.startswith('"') and text.endswith('"'):
-                    try: text = json.loads(text)
-                    except: text = text[1:-1]
-                # Fix slashes and newlines
-                text = text.replace('\\/', '/').replace('\\"', '"')
-                text = text.replace('\\n', '<br>').replace('\\t', '&nbsp;&nbsp;&nbsp;')
-                return text.strip()
-
-            # TEXT CLEANUP FUNCTION
+            # Text Clean Logic
             def clean_html(text):
                 if not text: return ""
                 text = str(text)
@@ -314,41 +301,52 @@ def handle_docs(message):
                 text = text.replace('\\n', '<br>').replace('\\t', '&nbsp;&nbsp;&nbsp;')
                 return text.strip()
 
+            # Single Question Extractor
+            def parse_q(q_node, parent_node):
+                try:
+                    # Parent aur Node dono jagah se ID dhoondhne ki koshish
+                    q_id = parent_node.get('id') or parent_node.get('unique_identifier') or q_node.get('id')
+                    # Difficulty bhi bahar hoti hai
+                    diff = parent_node.get('difficulty') or q_node.get('difficulty', 'EASY')
+                    
+                    raw_text = q_node.get('qns_content', {}).get('text', '')
+                    cleaned_q = clean_html(raw_text)
+                    
+                    if not q_id: q_id = cleaned_q # Backup
+                    
+                    if q_id not in seen_ids and cleaned_q:
+                        seen_ids.add(q_id)
+                        opts = [clean_html(opt.get('text', '')) for opt in q_node.get('options', [])]
+                        
+                        ans_index = 0
+                        ans_str = q_node.get('answer') or parent_node.get('answer', '[]')
+                        if ans_str and str(ans_str).strip() not in ['[]', '""', 'null', 'None']:
+                            try:
+                                ans_list = json.loads(str(ans_str)) 
+                                if len(ans_list) > 0: ans_index = int(ans_list[0])
+                            except: pass
+                        
+                        # 2 ya usse zyada options wale sab save karo (True/False ko bhi include karega)
+                        if len(opts) >= 2: 
+                            questions.append({"q": cleaned_q, "opts": opts[:4], "ans": ans_index, "diff": diff})
+                except Exception as e:
+                    print(f"Extraction error: {e}")
+
+            # Smart Recursive Searcher
             def search_for_questions(node):
                 if isinstance(node, dict):
-                    if 'qns_content' in node and 'options' in node:
-                        try:
-                            q_id = node.get('id') or node.get('unique_identifier')
-                            raw_text = node.get('qns_content', {}).get('text', '')
-                            cleaned_q = clean_html(raw_text)
-                            
-                            if not q_id: q_id = cleaned_q
-                            
-                            if q_id not in seen_ids:
-                                seen_ids.add(q_id)
-                                opts = [clean_html(opt.get('text', '')) for opt in node.get('options', [])]
-                                
-                                # 🔥 Difficulty Extract Yahan Ho Rahi Hai
-                                diff = node.get('difficulty', 'EASY') 
-                                
-                                ans_index = 0
-                                ans_str = node.get('answer', '[]')
-                                if ans_str and str(ans_str).strip() not in ['[]', '""', 'null', 'None']:
-                                    try:
-                                        ans_list = json.loads(str(ans_str)) 
-                                        if len(ans_list) > 0: ans_index = int(ans_list[0])
-                                    except: pass
-                                
-                                if len(opts) >= 4:
-                                    # "diff" ko JSON me save kar rahe hain
-                                    questions.append({"q": cleaned_q, "opts": opts[:4], "ans": ans_index, "diff": diff})
-                        except Exception as e:
-                            print(f"Error parsing question: {e}")
+                    # Scenario 1: Agar questions 'content' dabbe ke andar hain (Result JSON)
+                    if 'content' in node and isinstance(node['content'], dict) and 'qns_content' in node['content']:
+                        parse_q(node['content'], parent_node=node)
+                    # Scenario 2: Agar direct questions hain (Question JSON)
+                    elif 'qns_content' in node and 'options' in node:
+                        parse_q(node, parent_node=node)
                     else:
                         for k, v in node.items(): search_for_questions(v)
                 elif isinstance(node, list):
                     for item in node: search_for_questions(item)
             
+            # Function ko start karo
             search_for_questions(data)
                     
             if len(questions) > 0:
@@ -374,8 +372,6 @@ def handle_docs(message):
 
     except Exception as e:
         bot.reply_to(message, f"❌ Error: {e}")
-
-
 
 # ==========================================
 # 🌐 API ROUTES (UNCHANGED)
