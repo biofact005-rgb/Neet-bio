@@ -265,48 +265,77 @@ def handle_docs(message):
         file_info = bot.get_file(message.document.file_id)
         downloaded = bot.download_file(file_info.file_path)
         
-        # --- RESTORE LOGIC (Agar caption /restore hai) ---
+        # --- 1. RESTORE LOGIC ---
         if message.caption == '/restore' and message.document.file_name.endswith('.json'):
             data = json.loads(downloaded.decode('utf-8'))
-            
-            # 1. Users Restore
             if 'users' in data:
-                for u in data['users']:
-                    users_col.replace_one({"_id": u['_id']}, u, upsert=True)
-            
-            # 2. Questions Restore
+                for u in data['users']: users_col.replace_one({"_id": u['_id']}, u, upsert=True)
             if 'questions' in data:
-                # Optional: Purane questions delete karne hain toh ye line uncomment karein:
-                # questions_col.delete_many({}) 
-                for q in data['questions']:
-                    questions_col.update_one(
-                        {"source": q['source'], "type": q['type'], "chapter": q['chapter']}, 
-                        {"$set": q}, 
-                        upsert=True
-                    )
-
-            # 3. Logs Restore
+                for q in data['questions']: questions_col.update_one({"source": q['source'], "type": q['type'], "chapter": q['chapter']}, {"$set": q}, upsert=True)
             if 'logs' in data and len(data['logs']) > 0:
                 logs_col.insert_many(data['logs'])
-
-            bot.reply_to(message, "✅ **Restore Successful!**\nData database me wapas aa gaya hai.")
+            bot.reply_to(message, "✅ **Restore Successful!**")
             return
-        
-        # --- OLD LOGIC (Agar .txt file hai - Questions Upload) ---
+            
+        # --- 2. 👽 ALIAN 2.0 (DIRECT JSON UPLOAD) ---
+        if message.document.file_name.endswith('.json') and message.caption and '|' in message.caption:
+            data = json.loads(downloaded.decode('utf-8'))
+            
+            parts = [p.strip() for p in message.caption.split('|')]
+            source = parts[0] if len(parts) > 0 else "Alian 2.0"
+            typ = parts[1] if len(parts) > 1 else "Subject"
+            chapter = parts[2] if len(parts) > 2 else f"Test_{int(time.time())}"
+            
+            questions = []
+            q_list = data.get('data', {}).get('questions', []) 
+            
+            for item in q_list:
+                try:
+                    content_node = item.get('content', {})
+                    raw_text = content_node.get('qns_content', {}).get('text', '')
+                    if raw_text.startswith('"') and raw_text.endswith('"'):
+                        raw_text = raw_text[1:-1]
+                    
+                    opts = [opt['text'] for opt in content_node.get('options', [])]
+                    
+                    ans_index = 0
+                    ans_str = content_node.get('answer', '[]')
+                    if ans_str and ans_str not in ['[]', '""']:
+                        try:
+                            ans_list = json.loads(ans_str) 
+                            if len(ans_list) > 0: ans_index = int(ans_list[0])
+                        except: pass
+                    
+                    if len(opts) >= 4:
+                        questions.append({"q": raw_text, "opts": opts[:4], "ans": ans_index})
+                        
+                except Exception as e:
+                    print(f"Question skip hua: {e}")
+                    
+            if len(questions) > 0:
+                filter_q = {"source": source, "type": typ, "chapter": chapter}
+                update_q = {"$set": {"source": source, "type": typ, "chapter": chapter, "mode": "alian", "data": questions}}
+                questions_col.update_one(filter_q, update_q, upsert=True)
+                bot.reply_to(message, f"👽 **ALIAN 2.0 Uploaded Successfully!**\n\n📁 Path: {source} -> {typ} -> {chapter}\n✅ Qs Saved: {len(questions)}")
+            else:
+                bot.reply_to(message, "❌ Invalid JSON! No questions found.")
+            return
+
+        # --- 3. OLD LOGIC (.txt file upload for Allen) ---
         content = downloaded.decode('utf-8')
-        meta, data = parse_txt_file(content)
+        meta, data_q = parse_txt_file(content)
         if not meta: 
-            bot.reply_to(message, data) # Error message from parser
+            bot.reply_to(message, data_q)
             return
 
         filter_q = {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter']}
-        update_q = {"$set": {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter'], "mode": meta['mode'], "data": data}}
+        update_q = {"$set": {"source": meta['source'], "type": meta['type'], "chapter": meta['chapter'], "mode": meta['mode'], "data": data_q}}
         questions_col.update_one(filter_q, update_q, upsert=True)
-        bot.reply_to(message, f"☁️ Saved: {meta['chapter']} ({len(data)} Qs)")
+        bot.reply_to(message, f"☁️ Saved: {meta['chapter']} ({len(data_q)} Qs)")
 
     except Exception as e:
-        bot.reply_to(message, f"Error: {e}")
-
+        bot.reply_to(message, f"❌ Error: {e}")
+        
 
 # ==========================================
 # 🌐 API ROUTES (UNCHANGED)
